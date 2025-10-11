@@ -48,7 +48,7 @@ public class State(string newName, object newValue)
     {
         // ??= is the Null-Coalescing Assignment Operator. It checks if the left side is null
         // If so, it assigns to that null value the value on the right side.
-        conditional ??= (object obj) => true;
+        // conditional ??= (object obj) => true;
 
         //If the listener is not in the Listener Dictionary, then we add them to the dictionary with a new and empty payload_list
         if (!Listeners.TryGetValue(listener, out var payload_list))
