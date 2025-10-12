@@ -14,13 +14,13 @@ public static class StateActionHandlers
         {
             "handleIncrement", (currentState, payload) =>
             {
-                return PerformNumericOperation(currentState, payload, "add");
+                return NumericUtilities.Operation(currentState, payload, "add");
             }
         },
         {
             "handleDecrement", (currentState, payload) =>
             {
-                return PerformNumericOperation(currentState, payload, "subtract");
+                return NumericUtilities.Operation(currentState, payload, "sub");
             }
         },
         {
@@ -30,17 +30,4 @@ public static class StateActionHandlers
             }
         }
     };
-
-    private static object PerformNumericOperation(object current, object value, string operation)
-    {
-        double d_current_state = Convert.ToDouble(current);
-        double d_payload = Convert.ToDouble(value);
-        var d_result = operation switch
-        {
-            "add" => d_current_state + d_payload,
-            "subtract" => d_current_state - d_payload,
-            _ => throw new Exception($"Invalid math operation specified for StateActionHandler! Operation Specified: {operation}"),
-        };
-        return Convert.ChangeType(d_result, current.GetType());
-    }
 }
