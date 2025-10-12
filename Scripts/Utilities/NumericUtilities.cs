@@ -25,7 +25,7 @@ public static class NumericUtilities
                     d_result = Math.Ceiling(d_result);
                     break;
                 case "floor":
-                    d_result = Math.Ceiling(d_result);
+                    d_result = Math.Floor(d_result);
                     break;
             }
         }
