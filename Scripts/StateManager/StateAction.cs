@@ -1,6 +1,3 @@
 
-public class StateAction(string newType, object newValue)
-{
-    public string Type { get; private set; } = newType;
-    public object Value { get; private set; } = newValue;
-}
+//TODO: rename Type to "HandlerName", rename Value to "Payload", add an "ignores" argument.
+public record struct StateAction(string Type, object Value);

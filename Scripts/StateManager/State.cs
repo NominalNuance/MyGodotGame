@@ -70,9 +70,8 @@ public class State(string newName, object newValue)
     }
 }
 
-public class ListenerPayload(Action<object> newListenerFunction, Func<object, bool> newConditional)
+public record struct ListenerPayload(Action<object> ListenerFunction, Func<object, bool> Conditional)
 {
-    public Action<object> ListenerFunction { get; private set; } = newListenerFunction;
-    public Func<object, bool> Conditional { get; private set; } = newConditional ?? ((object obj) => true);
+    public Func<object, bool> Conditional { get; private set; } = Conditional ?? ((object obj) => true);
 
 }
