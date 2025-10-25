@@ -18,14 +18,22 @@ public static class StateRuleDictionary
             .Where(t => t.IsSubclassOf(baseType));
         foreach (Type type in rule_types)
         {
-            string file_name = type.Name;
-            LogicRules[file_name] = type;
+            string rule_name = type.Name;
+            LogicRules[rule_name] = type;
         }
     }
 
     public static StateLogicRule GetRule(string ruleName)
     {
-        return (StateLogicRule)Activator.CreateInstance(LogicRules[ruleName]);
+        if (LogicRules.TryGetValue(ruleName, out Type rule_object))
+        {
+            return (StateLogicRule)Activator.CreateInstance(rule_object);
+        }
+        else
+        {
+            throw new Exception($"Rule name not found in Rule Dictionary! Rule Name: {ruleName}");
+        }
+        
     }
 
 }

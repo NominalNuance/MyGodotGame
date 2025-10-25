@@ -1,0 +1,137 @@
+{
+	"character_bundle": {
+		"max_health": {
+			"type": "numerical_keeper",
+			"value": 100
+		},
+		"current_health": {
+			"type": "bounded_keeper",
+			"value": 100,
+			"dependencies": {
+				"bound_rule": {
+					"maxBound": "max_health",
+					"minBound": 0
+				}
+			}
+		},
+		"proportional_current_health": {
+			"type": "proportional_bounded_keeper",
+			"value": 100,
+			"dependencies": {
+				"prop_bound_rule": {
+					"maxBound": "max_health",
+					"minBound": 0
+				}
+			}
+		}
+	},
+	"player_character_bundle": {
+		"max_health": {
+			"type": "product_keeper_int",
+			"dependencies": {
+				"prod_bound_rule": {
+					"blah1": "section_health",
+					"blah2": "section_amount"
+				}
+			}
+		},
+		"current_section_max": {
+			"type": "product_keeper_int",
+			"dependencies": {
+				"prod_bound_rule": {
+					"blah1": "section_health",
+					"blah2": "current_section"
+				}
+			}
+		},
+		"current_health": {
+			"type": "that_damn_keeper",
+			"value": 100,
+			"dependencies": {
+				"bound_rule": {
+					"maxBound": "current_section_max",
+					"minBound": 0
+				},
+				"prop_bound_rule": {
+					"maxBound": "max_health",
+					"minBound": 0
+				},
+				"gate_rule": {
+					"gate": "next_section_max"
+				}
+			}
+		},
+		"section_health": {
+			"type": "numerical_keeper",
+			"value": 50
+		},
+		"section_amount": {
+			"type": "bounded_keeper",
+			"value": 2,
+			"dependencies": {
+				"bound_rule": {
+					"maxBound": 4,
+					"minBound": 1
+				}
+			}
+		},
+		"current_section": {
+			"type": "ratio_ceil_keeper_int",
+			"dependencies": {
+				"ratio_rule": {
+					"numerator": "current_health",
+					"denominator": "section_health"
+				}
+			}
+		},
+		"next_section_max": {
+			"type": "decrement_product_keeper_int",
+			"dependencies": {
+				"prod_rule": {
+					"minus_one": "current_section",
+					"other": "section_health"
+				}
+			}
+		}
+	},
+	"player_character_bundle2": {
+		"max_health": {
+			"type": "product_keeper_int",
+			"value": 100,
+			"dependencies": {
+				"prod_bound_rule": {
+					"blah1": "max_bar_health",
+					"blah2": "health_bars"
+				}
+			}
+		},
+		"max_bar_health": {
+			"type": "numerical_keeper",
+			"value": 50
+		},
+		"health_bars": {
+			"type": "bounded_keeper",
+			"value": 2,
+			"dependencies": {
+				"bound_rule": {
+					"maxBound": 4,
+					"minBound": 1
+				}
+			}
+		},
+		"current_health": {
+			"type": "bounded_keeper",
+			"value": 50,
+			"dependencies": {
+				"bound_rule": {
+					"maxBound": "max_bar_health",
+					"minBound": 0
+				}
+			}
+		},
+		"current_health_bar": {
+			"type": "numerical_keeper",
+			"value": 50
+		}
+	}
+}

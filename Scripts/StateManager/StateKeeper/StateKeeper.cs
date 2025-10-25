@@ -34,7 +34,7 @@ public class StateKeeper
             throw new Exception($"Warning: No handler for action type: {currentAction.HandlerName}");
         }
         Dictionary<string, object> new_state_bundle = new(){ { StateName, new_state } };
-        new_state_bundle[StateName] = RunLogicRules(new_state_bundle, currentStateBundle, action_info.IgnoreList);
+        new_state_bundle[StateName] = RunLogicRules(new_state_bundle, currentStateBundle, action_info.IgnoreList ?? []);
         if (new_state_bundle[StateName] != currentStateBundle[StateName])
         {
             new_state_bundle = NotifyDependents(new_state_bundle, currentStateBundle);
@@ -121,8 +121,7 @@ public class StateKeeper
     private void SetupKeeper(KeeperTemplate newKeeperTemplate)
     {
         DerivedState = newKeeperTemplate.Derived;
-        //TODO: Decide which convention to use. Does a keeper without actions have a null action list, or an empty one?
-        if (newKeeperTemplate.Actions != null || newKeeperTemplate.Actions.Count != 0)
+        if (newKeeperTemplate.Actions != null)
         {
             ActionHandlers = newKeeperTemplate.Actions;
         }
@@ -133,12 +132,10 @@ public class StateKeeper
             DerivedState = true;
         }
 
-        //TODO: Decide which convention to use. Does a keeper without logic rules have a null logic rule list, or an empty one?
-        if (newKeeperTemplate.LogicRules != null || newKeeperTemplate.LogicRules.Count != 0)
+        if (newKeeperTemplate.LogicRules != null)
         {
             InitializeLogicRules(newKeeperTemplate.LogicRules);
         }
-        // Why not both?
     }
 
 }
