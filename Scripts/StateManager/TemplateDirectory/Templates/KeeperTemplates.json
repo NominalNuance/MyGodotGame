@@ -1,0 +1,118 @@
+{
+  "BasicKeeper": {
+	"Actions": {
+	  "Set": {
+		"Handler": "HandleSet"
+	  }
+	}
+  },
+  "BoolKeeper": {
+	"Actions": {
+	  "Set": {
+		"Handler": "HandleSet"
+	  },
+	  "Flip": {
+		"Handler": "HandleFlip"
+	  }
+	}
+  },
+  "NumericalKeeper": {
+	"Actions": {
+	  "Set": {
+		"Handler": "HandleSet"
+	  },
+	  "Increment": {
+		"Handler": "HandleIncrement"
+	  },
+	  "Decrement": {
+		"Handler": "HandleDecrement"
+	  }
+	}
+  },
+  "BoundedKeeper": {
+	"Actions": {
+	  "Set": {
+		"Handler": "HandleSet"
+	  },
+	  "Increment": {
+		"Handler": "HandleIncrement"
+	  },
+	  "Decrement": {
+		"Handler": "HandleDecrement"
+	  }
+	},
+	"LogicRules": {
+	  "BoundRule": "BoundedValueRule"
+	}
+  },
+  "ProportionalBoundedKeeper": {
+	"Actions": {
+	  "Set": {
+		"Handler": "HandleSet"
+	  },
+	  "Increment": {
+		"Handler": "HandleIncrement"
+	  },
+	  "Decrement": {
+		"Handler": "HandleDecrement"
+	  }
+	},
+	"LogicRules": {
+	  "PropBoundRule": "ProportionalBoundedValueRule"
+	}
+  },
+  "ThatDamnKeeper": {
+	"Actions": {
+	  "Set": {
+		"Handler": "HandleSet"
+	  },
+	  "Increment": {
+		"Handler": "HandleIncrement"
+	  },
+	  "Decrement": {
+		"Handler": "HandleDecrement"
+	  },
+	  "Set_ignore_bound": {
+		"Handler": "HandleSet",
+		"Ignores": [
+          "BoundRule"
+		]
+	  },
+	  "Increment_ignore_bound": {
+		"Handler": "HandleIncrement",
+		"Ignores": [
+          "BoundRule"
+		]
+	  }
+	},
+	"LogicRules": {
+	  "PropBoundRule": "ProportionalBoundedValueRule",
+	  "BoundRule": "BoundedValueRule",
+	  "GateRule": "GatedValueRule"
+	}
+  },
+  "ProductKeeper": {
+	"LogicRules": {
+	  "ProdBoundRule": "ProductBoundRule"
+	},
+	"Derived": true
+  },
+  "RatioKeeper": {
+	"LogicRules": {
+	  "RatioRule": "RatioRule"
+	},
+	"Derived": true
+  },
+  "RatioCeilKeeper": {
+	"LogicRules": {
+	  "RatioRule": "RatioCeilRule"
+	},
+	"Derived": true
+  },
+  "DecrementProductKeeper": {
+	"LogicRules": {
+	  "ProdRule": "ProductMinusOneRule"
+	},
+	"Derived": true
+  }
+}

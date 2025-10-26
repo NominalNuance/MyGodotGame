@@ -6,10 +6,10 @@ public partial class KeeperTemplateTest : Node
     public override void _Ready()
     {
         // Force access to initialize the static class
-        var templates = KeeperTemplateLoader.KeeperTemplates;
+        var keeper_templates = TemplateLoader.KeeperTemplates;
 
-        GD.Print("Loaded " + templates.Count + " templates.");
-        foreach (var kvp in templates)
+        GD.Print("Loaded " + keeper_templates.Count + " keeper templates.");
+        foreach (var kvp in keeper_templates)
         {
             GD.Print($"Template: {kvp.Key}");
             GD.Print($"  Derived: {kvp.Value.Derived}");
@@ -46,6 +46,44 @@ public partial class KeeperTemplateTest : Node
             {
                 GD.Print("  LogicRules: null");
             }
+        }
+
+        var bundle_templates = TemplateLoader.BundleTemplates;
+        GD.Print("Loaded " + bundle_templates.Count + " bundle templates.");
+        foreach (var (bundle_name, bundle_template) in bundle_templates)
+        {
+            GD.Print($"Template: {bundle_name}");
+            foreach (var (state_name, bundle_state_template) in bundle_template)
+            {
+                GD.Print($"  {state_name}:");
+                GD.Print($"     Type: {bundle_state_template.Type}");
+                if (bundle_state_template.Value != null) 
+                {
+                    GD.Print($"     Value: {bundle_state_template.Value}");
+                }
+                else 
+                {
+                    GD.Print($"     Value: null");
+                }
+                if (bundle_state_template.Dependencies != null) 
+                {
+                    GD.Print($"     Dependencies:");
+                    foreach (var (rule_name, satisfier_dict) in bundle_state_template.Dependencies)
+                    {
+                        GD.Print($"         {rule_name}: ");
+                        foreach (var (dep_name, satisfier) in satisfier_dict)
+                        {
+                            GD.Print($"             {dep_name}: {satisfier}");
+                        }
+                    }
+                }
+                else
+                {
+                    GD.Print($"     Dependencies: null");
+                }
+
+            }
+            
         }
     }
 }

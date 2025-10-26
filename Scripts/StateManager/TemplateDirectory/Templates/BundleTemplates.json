@@ -1,0 +1,152 @@
+{
+	"CharacterBundle": {
+		"MaxHealth": {
+			"Keeper": "NumericalKeeper",
+			"Type": "int",
+			"Value": 100
+		},
+		"CurrentHealth": {
+			"Keeper": "BoundedKeeper",
+			"Type": "int",
+			"Value": 100,
+			"Dependencies": {
+				"BoundRule": {
+					"maxBound": "MaxHealth",
+					"minBound": 0
+				}
+			}
+		},
+		"ProportionalCurrentHealth": {
+			"Keeper": "ProportionalBoundedKeeper",
+			"Type": "int",
+			"Value": 100,
+			"Dependencies": {
+				"PropBoundRule": {
+					"maxBound": "MaxHealth",
+					"minBound": 0
+				}
+			}
+		}
+	},
+	"PlayerCharacterBundle": {
+		"MaxHealth": {
+			"Keeper": "ProductKeeper",
+			"Type": "int",
+			"Dependencies": {
+				"ProdBoundRule": {
+					"blah1": "SectionHealth",
+					"blah2": "SectionAmount"
+				}
+			}
+		},
+		"CurrentSectionMax": {
+			"Keeper": "ProductKeeper",
+			"Type": "int",
+			"Dependencies": {
+				"ProdBoundRule": {
+					"blah1": "SectionHealth",
+					"blah2": "CurrentSection"
+				}
+			}
+		},
+		"CurrentHealth": {
+			"Keeper": "ThatDamnKeeper",
+			"Type": "int",
+			"Value": 100,
+			"Dependencies": {
+				"BoundRule": {
+					"maxBound": "CurrentSectionMax",
+					"minBound": 0
+				},
+				"PropBoundRule": {
+					"maxBound": "MaxHealth",
+					"minBound": 0
+				},
+				"GateRule": {
+					"gate": "NextSectionMax"
+				}
+			}
+		},
+		"SectionHealth": {
+			"Keeper": "NumericalKeeper",
+			"Type": "int",
+			"Value": 50
+		},
+		"SectionAmount": {
+			"Keeper": "BoundedKeeper",
+			"Type": "int",
+			"Value": 2,
+			"Dependencies": {
+				"BoundRule": {
+					"maxBound": 4,
+					"minBound": 1
+				}
+			}
+		},
+		"CurrentSection": {
+			"Keeper": "RatioCeilKeeper",
+			"Type": "int",
+			"Dependencies": {
+				"RatioRule": {
+					"numerator": "CurrentHealth",
+					"denominator": "SectionHealth"
+				}
+			}
+		},
+		"NextSectionMax": {
+			"Keeper": "DecrementProductKeeper",
+			"Type": "int",
+			"Dependencies": {
+				"ProdRule": {
+					"minusOne": "CurrentSection",
+					"other": "SectionHealth"
+				}
+			}
+		}
+	},
+	"PlayerCharacterBundle2": {
+		"MaxHealth": {
+			"Keeper": "ProductKeeper",
+			"Type": "int",
+			"Value": 100,
+			"Dependencies": {
+				"ProdBoundRule": {
+					"blah1": "MaxBarHealth",
+					"blah2": "HealthBars"
+				}
+			}
+		},
+		"MaxBarHealth": {
+			"Keeper": "NumericalKeeper",
+			"Type": "int",
+			"Value": 50
+		},
+		"HealthBars": {
+			"Keeper": "BoundedKeeper",
+			"Type": "int",
+			"Value": 2,
+			"Dependencies": {
+				"BoundRule": {
+					"maxBound": 4,
+					"minBound": 1
+				}
+			}
+		},
+		"CurrentHealth": {
+			"Keeper": "BoundedKeeper",
+			"Type": "int",
+			"Value": 50,
+			"Dependencies": {
+				"BoundRule": {
+					"maxBound": "MaxBarHealth",
+					"minBound": 0
+				}
+			}
+		},
+		"CurrentHealthBar": {
+			"Keeper": "NumericalKeeper",
+			"Type": "int",
+			"Value": 50
+		}
+	}
+}
