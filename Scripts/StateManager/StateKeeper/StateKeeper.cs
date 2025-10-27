@@ -4,7 +4,7 @@ using System.Linq;
 
 public class StateKeeper
 {
-    public object StateDefaultValue { get; private set; }
+    public object StateDefaultValue { get; set; }
     public string StateDefaultType { get; set; }
     public string StateName { get; private set; } = "";
     public List<object> Dependencies { get; private set; } = []; // What I depend on
