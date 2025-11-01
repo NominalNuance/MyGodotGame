@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EroJRPG.Scripts.StateManager.StateKeeper;
 
 public abstract class StateLogicRule
 {

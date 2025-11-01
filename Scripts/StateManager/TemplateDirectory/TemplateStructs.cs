@@ -1,9 +1,13 @@
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
+
+namespace EroJRPG.Scripts.StateManager.TemplateDirectory;
 public record struct BundleStateTemplate
 (
     [property: JsonPropertyName("Keeper")] string Keeper,
-    [property: JsonPropertyName("Type")] string Type,
+    [property: JsonPropertyName("Type"), JsonConverter(typeof(TypeConverter))] Type Type,
     [property: JsonPropertyName("Value")] object Value = null,
     [property: JsonPropertyName("Dependencies")] Dictionary<string, Dictionary<string, object>> Dependencies = null
 );

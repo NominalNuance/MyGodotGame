@@ -16,6 +16,6 @@ public class BoundedValueRule : StateLogicRule
         double d_max_bound = Convert.ToDouble(GetDependencyValue("maxBound", newStateBundle, oldStateBundle));
         double d_min_bound = Convert.ToDouble(GetDependencyValue("minBound", newStateBundle, oldStateBundle));
         d_current_state = Math.Clamp(d_current_state, d_min_bound, d_max_bound);
-        return NumericUtilities.BackTo(currentState.GetType(), d_current_state);
+        return Convert.ChangeType(d_current_state, currentState.GetType());
     }
 }

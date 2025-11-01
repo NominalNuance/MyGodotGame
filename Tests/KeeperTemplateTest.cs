@@ -1,3 +1,4 @@
+using EroJRPG.Scripts.StateManager.TemplateDirectory;
 using Godot;
 using System;
 

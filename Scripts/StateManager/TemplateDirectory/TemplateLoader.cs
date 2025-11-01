@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Text.Json;
 using Godot;
 
-//TODO: Add "VarType" field to BundleTemplate
-// Semantic cleanup for JSON files.
+namespace EroJRPG.Scripts.StateManager.TemplateDirectory;
+
 public static class TemplateLoader
 {
     public static Dictionary<string, KeeperTemplate> KeeperTemplates { get; private set; } = [];
     public static Dictionary<string, Dictionary<string, BundleStateTemplate>> BundleTemplates { get; private set; } = [];
-    
+
     //Syntax for tuples in C#
     private readonly static (string Path, Type TargetType, Action<object> AssignAction, string ErrorMessage)[] TemplateConfigs =
     {
@@ -30,7 +30,7 @@ public static class TemplateLoader
     {
         PropertyNameCaseInsensitive = false
     };
-    static TemplateLoader() 
+    static TemplateLoader()
     {
         foreach (var (path, targetType, assignAction, errorMessage) in TemplateConfigs)
         {
@@ -40,7 +40,7 @@ public static class TemplateLoader
     private static void LoadTemplates(string newDirectoryPath, Type newTargetType, Action<object> newAssignAction, string newErrorMessage)
     {
 
-        using var file = Godot.FileAccess.Open(newDirectoryPath, Godot.FileAccess.ModeFlags.Read);
+        using var file = FileAccess.Open(newDirectoryPath, FileAccess.ModeFlags.Read);
         string json_string = file.GetAsText();
         if (file == null)
         {

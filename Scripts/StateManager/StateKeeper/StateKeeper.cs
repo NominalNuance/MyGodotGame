@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EroJRPG.Scripts.StateManager.TemplateDirectory;
 
+namespace EroJRPG.Scripts.StateManager.StateKeeper;
 public class StateKeeper
 {
     public object StateDefaultValue { get; set; }
@@ -33,7 +35,7 @@ public class StateKeeper
         {
             throw new Exception($"Warning: No handler for action type: {currentAction.HandlerName}");
         }
-        Dictionary<string, object> new_state_bundle = new(){ { StateName, new_state } };
+        Dictionary<string, object> new_state_bundle = new() { { StateName, new_state } };
         new_state_bundle[StateName] = RunLogicRules(new_state_bundle, currentStateBundle, action_info.IgnoreList ?? []);
         if (new_state_bundle[StateName] != currentStateBundle[StateName])
         {

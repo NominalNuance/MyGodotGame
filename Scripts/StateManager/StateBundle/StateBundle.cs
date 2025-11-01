@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EroJRPG.Scripts.StateManager;
+using EroJRPG.Scripts.StateManager.StateKeeper;
+using EroJRPG.Scripts.StateManager.TemplateDirectory;
 
 public class StateBundle
 {
@@ -31,11 +34,11 @@ public class StateBundle
             KeeperTemplate current_keeper_template = TemplateLoader.KeeperTemplates[state_name];
 
             //TODO: implement functionality of JSON "Type" field here
-            Type value_type = TypeUtilities.GetType(bundle_state_template.Type);
+            // potentially add alternative for Convert.ChangeType here
 
             if (bundle_state_template.Value != null)
             {
-                Keepers.Add(state_name, new StateKeeper(state_name, Convert.ChangeType(bundle_state_template.Value, value_type), current_keeper_template));
+                Keepers.Add(state_name, new StateKeeper(state_name, Convert.ChangeType(bundle_state_template.Value, bundle_state_template.Type), current_keeper_template));
             }
             else
             {

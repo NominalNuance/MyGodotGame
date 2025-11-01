@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
+namespace EroJRPG.Scripts.StateManager;
+
 public class State(string newName, object newValue)
 {
     public string Name { get; private set; } = newName;
@@ -57,6 +59,7 @@ public class State(string newName, object newValue)
             Listeners.Add(listener, payload_list);
         }
 
+        //TODO: check to make sure the current listenerFunction and conditional do not already exist
         payload_list.Add( new ListenerPayload(listenerFunction, conditional));
 
     }
@@ -72,6 +75,6 @@ public class State(string newName, object newValue)
 
 public record struct ListenerPayload(Action<object> ListenerFunction, Func<object, bool> Conditional)
 {
-    public Func<object, bool> Conditional { get; private set; } = Conditional ?? ((object obj) => true);
+    public Func<object, bool> Conditional { get; private set; } = Conditional ?? ((obj) => true);
 
 }
