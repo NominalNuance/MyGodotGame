@@ -53,16 +53,3 @@ public static class TypeUtilities
         throw new Exception($"TypeUtilities GetType: Unsupported type: {typeString}");
     }
 }
-
-public class TypeConverter : JsonConverter<Type>
-{
-    public override Type Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        string type_string = reader.GetString();
-        return TypeUtilities.GetType(type_string!); // why an '!' here?
-    }
-    public override void Write(Utf8JsonWriter writer, Type value, JsonSerializerOptions options)
-    {
-        throw new NotSupportedException($"TypeConverter Write: Serialization of Type not supported. If required, try implementing it now!");
-    }
-}

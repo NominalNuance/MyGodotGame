@@ -4,6 +4,7 @@ using System.Linq;
 using EroJRPG.Scripts.StateManager;
 using EroJRPG.Scripts.StateManager.StateKeeper;
 using EroJRPG.Scripts.StateManager.TemplateDirectory;
+using Godot;
 
 public class StateBundle
 {
@@ -24,20 +25,20 @@ public class StateBundle
             keeper.HasRunThisAction = false;
         }
         return new_bundle;
-        throw new Exception();
     }
     private void InitializeKeepers(Dictionary<string, BundleStateTemplate> newBundleTemplateDict)
     {
         Dictionary<string, Dictionary<string, Dictionary<string, object>>> dependency_dictionary = [];
         foreach (var (state_name, bundle_state_template) in newBundleTemplateDict)
         {
-            KeeperTemplate current_keeper_template = TemplateLoader.KeeperTemplates[state_name];
+            KeeperTemplate current_keeper_template = TemplateLoader.KeeperTemplates[bundle_state_template.Keeper];
 
             //TODO: implement functionality of JSON "Type" field here
             // potentially add alternative for Convert.ChangeType here
 
             if (bundle_state_template.Value != null)
             {
+                GD.Print($"{bundle_state_template.Value}, type is {bundle_state_template.Value.GetType()}");
                 Keepers.Add(state_name, new StateKeeper(state_name, Convert.ChangeType(bundle_state_template.Value, bundle_state_template.Type), current_keeper_template));
             }
             else
@@ -108,7 +109,7 @@ public class StateBundle
                     Dictionary<string, object> temp = new() {{state_name, current_keeper.StateDefaultValue}};
 
                     object newValue = current_keeper.RunLogicRules(temp, state_values, []);
-                    newValue = current_keeper.RunBidirectionalLogicRules(temp, state_values);
+                    //newValue = current_keeper.RunBidirectionalLogicRules(temp, state_values);
 
                     current_keeper.StateDefaultValue = newValue;
                     state_values[state_name] = newValue;

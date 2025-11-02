@@ -16,9 +16,18 @@ public abstract class StateLogicRule
     public void SetupDependency(string dependencyKey, object dependency)
     {
         Dependencies.Add(dependencyKey, dependency);
+        if (AcceptsAnyDependency)
+        {
+            DependencyKeys.Add(dependencyKey);
+        }
     }
     public object ExecuteLogic(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle, bool bidirectionalTrigger = false)
     {
+        if (DependencyKeys.Count == 0)
+        {
+            throw new Exception($"StateLogicRule ExecuteLogic: No dependency keys assigned for this rule for the state `{StateName}`");
+        }
+
         object new_state;
         if (bidirectionalTrigger)
         {

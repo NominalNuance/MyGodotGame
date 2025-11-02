@@ -9,10 +9,11 @@ public static class TemplateLoader
 {
     public static Dictionary<string, KeeperTemplate> KeeperTemplates { get; private set; } = [];
     public static Dictionary<string, Dictionary<string, BundleStateTemplate>> BundleTemplates { get; private set; } = [];
+    public static Dictionary<string, BundleDefaultsTemplate> BundleDefaultTemplates { get; private set; } = [];
 
     //Syntax for tuples in C#
     private readonly static (string Path, Type TargetType, Action<object> AssignAction, string ErrorMessage)[] TemplateConfigs =
-    {
+    [
         (
             "res://Scripts/StateManager/TemplateDirectory/Templates/KeeperTemplates.json",
             typeof(Dictionary<string, KeeperTemplate>),
@@ -24,8 +25,14 @@ public static class TemplateLoader
             typeof(Dictionary<string, Dictionary<string, BundleStateTemplate>>),
             loaded => BundleTemplates = (Dictionary<string, Dictionary<string, BundleStateTemplate>>)loaded,
             "Failed to deserialize bundle templates."
+        ),
+        (
+            "res://Scripts/StateManager/TemplateDirectory/Templates/BundleDefaultsTemplate.json",
+            typeof(Dictionary<string, BundleDefaultsTemplate>),
+            loaded => BundleDefaultTemplates = (Dictionary<string, BundleDefaultsTemplate>)loaded,
+            "Failed to deserialize bundle default templates."
         )
-    };
+    ];
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         PropertyNameCaseInsensitive = false
@@ -41,13 +48,13 @@ public static class TemplateLoader
     {
 
         using var file = FileAccess.Open(newDirectoryPath, FileAccess.ModeFlags.Read);
-        string json_string = file.GetAsText();
         if (file == null)
         {
             GD.PushError($"{newErrorMessage}: File not found for '{newDirectoryPath}'");
             return;
         }
 
+        string json_string = file.GetAsText();
         object new_templates = JsonSerializer.Deserialize(json_string, newTargetType, SerializerOptions);
         if (new_templates != null)
         {

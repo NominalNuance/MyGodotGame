@@ -11,9 +11,9 @@ namespace EroJRPG.Scripts.StateManager;
 // Add a pending listener list for when a listener wants to subscribe to a state that doesn't exist yet <- DONE
 // Have BundleTemplate resolve the variable type from the string instead of the StateBundle <- DONE
 // profile performance of Convert.ToDouble and Convert.ChangeType vs. NumericUtilities options <- DONE
-// test if states like godot's 'Vector2' work <- ONHOLD: difficult and may not be necesarry
-// recreate all of the lost StateLogicRules
-// create templates for default values for StateBundles
+// test if states like godot's 'Vector2' work <- ONHOLD: difficult and may not be necesarry 
+// recreate all of the lost StateLogicRules <- DONE
+// create templates for default values for StateBundles <- DONE
 
 
 public partial class StateManager : Node
@@ -116,9 +116,7 @@ public partial class StateManager : Node
             throw new Exception($"StateManager Unsubscribe: Bundle Name '{bundleName}' not found.");
         } 
     }
-
-    //TODO: add default value template functionality here
-    public void CreateBundle(string bundleTemplateKey, string bundleName)
+    public void CreateBundle(string bundleTemplateKey, string bundleName, string bundleDefaultsName = "")
     {
         if (StateBundles.ContainsKey(bundleName))
         {
@@ -127,6 +125,26 @@ public partial class StateManager : Node
         }
 
         StateBundle new_bundle = new(bundleName, TemplateLoader.BundleTemplates[bundleTemplateKey]);
+
+        if (bundleDefaultsName != "")
+        {
+            if (TemplateLoader.BundleDefaultTemplates.TryGetValue(bundleDefaultsName, out BundleDefaultsTemplate default_template))
+            {
+                if (default_template.Type == bundleTemplateKey)
+                {
+                    new_bundle.SetDefaultValues(default_template.DefaultValues);
+                }
+                else
+                {
+                    throw new Exception($"StateManager CreateBundle: Default template of wrong type. Type of template: '{default_template.Type}'; Type of bundle: '{bundleTemplateKey}'.");
+                }
+            }
+            else
+            {
+                throw new Exception($"StateManager CreateBundle: Default template name '{bundleDefaultsName}' not found.");
+            }
+        }
+
         StateBundles.Add(bundleName, new_bundle);
         StateDictionary[bundleName] = [];
         CachedStates[bundleName] = [];

@@ -1,0 +1,10 @@
+{
+	"TestDefaults": {
+		"BundleType": "CharacterBundle",
+		"Defaults": {
+			"MaxHealth": 420,
+			"CurrentHealth": 69,
+			"ProportionalCurrentHealth": 1337
+		}
+	}
+}

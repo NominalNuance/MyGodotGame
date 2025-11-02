@@ -13,6 +13,10 @@ config_version=5
 config/name="Ero JRPG"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 
+[autoload]
+
+StateManager="*res://Scripts/StateManager/StateManager.cs"
+
 [dotnet]
 
 project/assembly_name="Ero JRPG"

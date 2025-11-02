@@ -85,7 +85,7 @@ public class StateKeeper
         {
             if (!dependent_keeper.HasRunThisAction)
             {
-                new_state_bundle.Add(dependent_keeper.StateName, dependent_keeper.RunBidirectionalLogicRules(new_state_bundle, oldStateBundle));
+                new_state_bundle[dependent_keeper.StateName] = dependent_keeper.RunBidirectionalLogicRules(new_state_bundle, oldStateBundle);
                 new_state_bundle = dependent_keeper.NotifyDependents(new_state_bundle, oldStateBundle);
             }
         }
@@ -118,6 +118,7 @@ public class StateKeeper
         foreach (var (internal_rule_name, rule_string) in newLogicRules)
         {
             StateLogicRules.Add(internal_rule_name, StateRuleDictionary.GetRule(rule_string));
+            StateLogicRules[internal_rule_name].StateName = StateName;
         }
     }
     private void SetupKeeper(KeeperTemplate newKeeperTemplate)
