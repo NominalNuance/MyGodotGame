@@ -113,7 +113,7 @@ public partial class StateManager : Node
         }
         else
         {
-            throw new Exception($"StateManager Unsubscribe: Bundle Name '{bundleName}' not found.");
+            GD.PushWarning($"StateManager Unsubscribe: Bundle Name '{bundleName}' not found.");
         } 
     }
     public void CreateBundle(string bundleTemplateKey, string bundleName, string bundleDefaultsName = "")
@@ -130,13 +130,13 @@ public partial class StateManager : Node
         {
             if (TemplateLoader.BundleDefaultTemplates.TryGetValue(bundleDefaultsName, out BundleDefaultsTemplate default_template))
             {
-                if (default_template.Type == bundleTemplateKey)
+                if (default_template.BundleType == bundleTemplateKey)
                 {
                     new_bundle.SetDefaultValues(default_template.DefaultValues);
                 }
                 else
                 {
-                    throw new Exception($"StateManager CreateBundle: Default template of wrong type. Type of template: '{default_template.Type}'; Type of bundle: '{bundleTemplateKey}'.");
+                    throw new Exception($"StateManager CreateBundle: Default template of wrong type. Type of template: '{default_template.BundleType}'; Type of bundle: '{bundleTemplateKey}'.");
                 }
             }
             else

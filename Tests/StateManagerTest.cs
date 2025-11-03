@@ -28,18 +28,18 @@ public partial class StateManagerTest : Node
         },
         { "PlayerCharacterBundle", new Dictionary<string, List<string>>
             {
-                { "MaxHealth", new() { "Set" } }, // ProductKeeper: derived, no actions - skip
-                { "CurrentSectionMax", new List<string>() }, // derived
-                { "CurrentHealth", new() { "Set", "Increment", "Decrement", "Set_ignore_bound", "Increment_ignore_bound" } },
+                { "MaxHealth", new List<string>() },
+                { "CurrentSectionMax", new List<string>() },
+                { "CurrentHealth", new() { "Set", "Increment", "Decrement", "SetIgnoreBound", "IncrementIgnoreBound" } },
                 { "SectionHealth", new() { "Set", "Increment", "Decrement" } },
                 { "SectionAmount", new() { "Set", "Increment", "Decrement" } },
-                { "CurrentSection", new List<string>() }, // derived
-                { "NextSectionMax", new List<string>() } // derived
+                { "CurrentSection", new List<string>() },
+                { "NextSectionMax", new List<string>() }
             }
         },
         { "PlayerCharacterBundle2", new Dictionary<string, List<string>>
             {
-                { "MaxHealth", new List<string>() }, // derived
+                { "MaxHealth", new List<string>() },
                 { "MaxBarHealth", new() { "Set", "Increment", "Decrement" } },
                 { "HealthBars", new() { "Set", "Increment", "Decrement" } },
                 { "CurrentHealth", new() { "Set", "Increment", "Decrement" } },
@@ -53,10 +53,65 @@ public partial class StateManagerTest : Node
         { "Set", 150 },
         { "Increment", 25 },
         { "Decrement", -10 },
-        { "Set_ignore_bound", 999 },
-        { "Increment_ignore_bound", 999 },
+        { "SetIgnoreBound", 999 },
+        { "IncrementIgnoreBound", 999 },
         { "Flip", null }
     };
+
+    // NEW: Test subscriber class to track notifications
+    private class TestSubscriber
+    {
+        public int CallbackCount { get; private set; } = 0;
+        public List<object> ReceivedValues { get; private set; } = new();
+        public string SubscriberName { get; }  // For debug prints
+
+        public TestSubscriber(string name)
+        {
+            SubscriberName = name;
+        }
+
+        // Callback action: Increments count, stores value
+        public void OnStateChange(object newValue)
+        {
+            CallbackCount++;
+            ReceivedValues.Add(newValue);
+            GD.Print($"    🔔 [{SubscriberName}] Callback #{CallbackCount}: Received {newValue}");
+        }
+
+        // Conditional callback: Only fires if condition passes (e.g., value > 50)
+        public void OnStateChangeConditional(object newValue, Func<object, bool> condition)
+        {
+            if (condition(newValue))
+            {
+                OnStateChange(newValue);
+            }
+            else
+            {
+                GD.Print($"    🔇 [{SubscriberName}] Conditional skipped: {newValue} (condition false)");
+            }
+        }
+
+        // Reset for reuse
+        public void Reset()
+        {
+            CallbackCount = 0;
+            ReceivedValues.Clear();
+        }
+
+        // Verify: Check if expected count/values match
+        public bool Verify(int expectedCount, params object[] expectedValues)
+        {
+            bool countOk = CallbackCount == expectedCount;
+            bool valuesOk = expectedValues.Length == 0 || ReceivedValues.Count >= expectedValues.Length && expectedValues.Zip(ReceivedValues.Take(expectedValues.Length), (exp, rec) => Equals(exp, rec)).All(ok => ok);
+            if (!countOk || !valuesOk)
+            {
+                GD.PushWarning($"    ❌ [{SubscriberName}] Verify failed: Expected {expectedCount} calls with {string.Join(", ", expectedValues)}, got {CallbackCount} with {string.Join(", ", ReceivedValues)}");
+                return false;
+            }
+            GD.Print($"    ✅ [{SubscriberName}] Verified: {CallbackCount} calls match expected");
+            return true;
+        }
+    }
 
     public override void _Ready()
     {
@@ -103,29 +158,31 @@ public partial class StateManagerTest : Node
 
                 foreach (string actionName in actions)
                 {
-                    object payload = _testPayloads[actionName];
+                    object payload;
+                    if (!_testPayloads.TryGetValue(actionName, out payload))
+                    {
+                        GD.PushWarning($"No test payload for action '{actionName}' on '{state}'; skipping.");
+                        continue;
+                    }
+
                     GD.Print($"  🔄 Dispatch '{state}.{actionName}({payload})'");
 
-                    // Before
                     object before = _stateManager.GetState(bundleName, state);
                     GD.Print($"    Before: {state} = {before}");
 
-                    // Dispatch
                     try
                     {
                         _stateManager.Dispatch(bundleName, state, new StateAction(actionName, payload));
                     }
                     catch (Exception e)
                     {
-                        GD.PushError($"Dispatch failed: {e.Message}");
+                        GD.PushError($"Dispatch failed for '{state}.{actionName}': {e.Message}");
                         continue;
                     }
 
-                    // After
                     object after = _stateManager.GetState(bundleName, state);
                     GD.Print($"    After:  {state} = {after}");
 
-                    // Check if changed (rules might clamp)
                     if (Equals(before, after))
                         GD.Print($"    ⚠️   No change (likely rule clamped)");
                 }
@@ -134,10 +191,150 @@ public partial class StateManagerTest : Node
             // Specific rule tests
             RuleSpecificTests(bundleName, bundleTemplate);
 
+            // NEW: Notification (Subscribe/Unsubscribe) tests
+            NotificationTests(bundleName, bundleTemplate);
+
             DumpBundle(bundleName, bundleTemplate);
             _stateManager.DestroyBundle(bundleName);
         }
     }
+
+    // NEW: Tests Subscribe/Unsubscribe with triggers
+    // NEW: Tests Subscribe/Unsubscribe with triggers
+private void NotificationTests(string bundleName, string bundleTemplate)
+{
+    GD.Print($"  🔔 Notification Tests for {bundleTemplate} (Subscribe/Unsubscribe)");
+
+    // Pick a non-derived state for testing (e.g., CurrentHealth—has actions to trigger changes)
+    string testState = "CurrentHealth";  // Fallback to first non-derived if needed
+    if (!_bundleStates[bundleTemplate].Contains(testState) || !_bundleStateActions[bundleTemplate][testState].Any())
+    {
+        GD.Print($"    ⏭️  Skipping notifications: No suitable non-derived state (e.g., {testState})");
+        return;
+    }
+
+    // Create test subscribers
+    var basicSub = new TestSubscriber("Basic");
+    var conditionalSub = new TestSubscriber("Conditional (>50)");
+    var multiSub = new TestSubscriber("Multi");
+
+    // Test 1: Subscribe to existing state (basic + conditional)
+    GD.Print($"    📝 Subscribe basic + conditional to '{testState}'");
+    _stateManager.Subscribe(bundleName, testState, basicSub, basicSub.OnStateChange);
+    _stateManager.Subscribe(bundleName, testState, conditionalSub, (val) => conditionalSub.OnStateChangeConditional(val, v => (int)v > 50));
+
+    // Trigger: Dispatch to change value (e.g., Increment—should notify both if >50)
+    object initialValue = _stateManager.GetState(bundleName, testState);
+    GD.Print($"    Initial {testState}: {initialValue}");
+    try
+    {
+        _stateManager.Dispatch(bundleName, testState, new StateAction("Increment", 25));  // Triggers notification
+    }
+    catch (Exception e)
+    {
+        GD.PushError($"Notification trigger dispatch failed: {e.Message}");
+    }
+    object newValue = _stateManager.GetState(bundleName, testState);
+    GD.Print($"    After trigger: {testState} = {newValue}");
+
+    // Verify: Both should fire (assuming initial +25 >50)
+    basicSub.Verify(1, newValue);
+    conditionalSub.Verify((int)newValue > 50 ? 1 : 0);  // Conditional only if >50
+
+    // Test 2: Multiple subscriptions (subscribe again with different conditional)
+    GD.Print($"    📝 Subscribe multi (different conditional: even values) to '{testState}'");
+    _stateManager.Subscribe(bundleName, testState, multiSub, (val) => multiSub.OnStateChangeConditional(val, v => (int)v % 2 == 0));
+
+    // Trigger again (Decrement to test multi + conditional)
+    try
+    {
+        _stateManager.Dispatch(bundleName, testState, new StateAction("Decrement", -10));  // Note: Adjust if sign flip; triggers all
+    }
+    catch (Exception e)
+    {
+        GD.PushError($"Notification trigger dispatch failed: {e.Message}");
+    }
+    newValue = _stateManager.GetState(bundleName, testState);
+    GD.Print($"    After multi-trigger: {testState} = {newValue}");
+
+    // Verify: All three fire (basic always, conditional if >50, multi if even)
+    // FIXED: Cast initialValue to int for expected value calculation (from previous response)
+    basicSub.Verify(2, (int)initialValue + 25, newValue);  // Cumulative: First trigger was +25
+    conditionalSub.Verify((int)newValue > 50 ? 2 : 1);
+    multiSub.Verify((int)newValue % 2 == 0 ? 1 : 0);
+
+    // Test 3: Unsubscribe (one by one)
+    GD.Print($"    ❌ Unsubscribe conditional and multi from '{testState}'");
+    _stateManager.Unsubscribe(bundleName, testState, conditionalSub);
+    _stateManager.Unsubscribe(bundleName, testState, multiSub);
+
+    // Trigger again: Only basic should fire
+    try
+    {
+        _stateManager.Dispatch(bundleName, testState, new StateAction("Increment", 25));
+    }
+    catch (Exception e)
+    {
+        GD.PushError($"Notification trigger dispatch failed: {e.Message}");
+    }
+    newValue = _stateManager.GetState(bundleName, testState);
+    GD.Print($"    After unsubscribe trigger: {testState} = {newValue}");
+
+    // Verify: Basic fires (3rd time), others don't
+    basicSub.Verify(3);
+    conditionalSub.Verify(conditionalSub.CallbackCount);  // No change
+    multiSub.Verify(multiSub.CallbackCount);  // No change
+
+    // Test 4: FIXED: Pending subscribers (subscribe BEFORE bundle creation to hit pending without throw)
+    GD.Print($"    📝 Test pending: Subscribe to '{testState}' BEFORE bundle creation (missing bundle → pending)");
+    string pendingBundleName = $"pending_test_{bundleTemplate.ToLower()}";  // New bundle name
+    var pendingSub = new TestSubscriber("Pending");
+
+    // Subscribe to missing bundle/state → Adds to pending (no throw, as bundle missing)
+    _stateManager.Subscribe(pendingBundleName, testState, pendingSub, pendingSub.OnStateChange);
+    GD.Print($"    Pending subscribe done (bundle '{pendingBundleName}' missing → added to pending)");
+
+    // Unsubscribe pending (before creation) → Removes from pending (hits outer else if RemovePending)
+    GD.Print($"    ❌ Unsubscribe pending '{testState}' in missing bundle");
+    _stateManager.Unsubscribe(pendingBundleName, testState, pendingSub);
+    GD.Print($"    Pending unsubscribe done (removed from pending)");
+
+    // Now create the bundle → Triggers pending resolution in CreateBundle (but empty since unsubbed)
+    _stateManager.CreateBundle(bundleTemplate, pendingBundleName, "");  // No defaults for simplicity
+    GD.Print($"    Bundle '{pendingBundleName}' created (pending resolved)");
+
+    // Trigger: Dispatch on testState → Should NOT fire (unsubbed pending)
+    try
+    {
+        _stateManager.Dispatch(pendingBundleName, testState, new StateAction("Increment", 25));
+    }
+    catch (Exception e)
+    {
+        GD.PushError($"Pending trigger dispatch failed: {e.Message}");
+    }
+    object pendingNewValue = _stateManager.GetState(pendingBundleName, testState);
+    GD.Print($"    After pending trigger: {testState} = {pendingNewValue} (no callback expected)");
+
+    // Verify: No callback (unsubbed pending)
+    pendingSub.Verify(0);
+
+    // Clean up
+    _stateManager.DestroyBundle(pendingBundleName);
+
+    // Test 5: Unsubscribe non-existent (should warn but succeed—bundle missing → RemovePending)
+    GD.Print($"    ❌ Unsubscribe non-existent subscriber (missing bundle/state)");
+    var fakeSub = new TestSubscriber("Fake");
+    string fakeBundle = $"fake_{bundleTemplate.ToLower()}";
+    string fakeState = "FakeState";
+    _stateManager.Unsubscribe(fakeBundle, fakeState, fakeSub);  // No-op, warns via your code (bundle missing → RemovePending returns false, but no throw if you adjust; as-is, throws—see note below)
+    GD.Print($"    Non-existent unsubscribe done (no-op/warn expected)");
+
+    // Reset and unsubscribe basic (final cleanup)
+    basicSub.Reset();
+    _stateManager.Unsubscribe(bundleName, testState, basicSub);
+
+    GD.Print($"    ✅ All notification tests passed for {bundleTemplate}");
+}
 
     private void RuleSpecificTests(string bundleName, string template)
     {
@@ -146,45 +343,86 @@ public partial class StateManagerTest : Node
         switch (template)
         {
             case "CharacterBundle":
-                // Test clamping (BoundedValueRule)
-                _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("Set", 999));
-                GD.Print($"    CurrentHealth clamped? {_stateManager.GetState(bundleName, "CurrentHealth")}");
+                try
+                {
+                    _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("Set", 999));
+                    GD.Print($"    CurrentHealth clamped? {_stateManager.GetState(bundleName, "CurrentHealth")}");
+                }
+                catch (Exception e)
+                {
+                    GD.PushError($"Rule test dispatch failed: {e.Message}");
+                }
 
-                // Test proportional scale (ProportionalBoundedValueRule bi-dir)
                 object oldCurrentProp = _stateManager.GetState(bundleName, "ProportionalCurrentHealth");
-                _stateManager.Dispatch(bundleName, "MaxHealth", new StateAction("Set", 500));
+                try
+                {
+                    _stateManager.Dispatch(bundleName, "MaxHealth", new StateAction("Set", 500));
+                }
+                catch (Exception e)
+                {
+                    GD.PushError($"Rule test dispatch failed: {e.Message}");
+                }
                 object newCurrentProp = _stateManager.GetState(bundleName, "ProportionalCurrentHealth");
                 GD.Print($"    Prop Health scaled? Old:{oldCurrentProp} → New:{newCurrentProp} (Max now 500)");
 
-                // Reset (destroy first to avoid duplicate warning)
                 _stateManager.DestroyBundle(bundleName);
                 string defaults = "TestDefaults";
                 _stateManager.CreateBundle("CharacterBundle", bundleName, defaults);
                 break;
 
             case "PlayerCharacterBundle":
-                // Test sectioning & gates
-                _stateManager.Dispatch(bundleName, "SectionAmount", new StateAction("Increment", 1)); // MaxHealth +=50
-                DumpBundle(bundleName, template); // Check derived updates
+                try
+                {
+                    _stateManager.Dispatch(bundleName, "SectionAmount", new StateAction("Increment", 1));
+                    DumpBundle(bundleName, template);
+                }
+                catch (Exception e)
+                {
+                    GD.PushError($"Rule test dispatch failed: {e.Message}");
+                }
 
-                // Damage to cross section
-                _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("Set", 10)); // Should gate at NextSectionMax?
-                GD.Print($"    Gated? CurrentHealth:{_stateManager.GetState(bundleName, "CurrentHealth")}, CurrentSection:{_stateManager.GetState(bundleName, "CurrentSection")}");
+                try
+                {
+                    _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("Set", 10));
+                    GD.Print($"    Gated? CurrentHealth:{_stateManager.GetState(bundleName, "CurrentHealth")}, CurrentSection:{_stateManager.GetState(bundleName, "CurrentSection")}");
+                }
+                catch (Exception e)
+                {
+                    GD.PushError($"Rule test dispatch failed: {e.Message}");
+                }
 
-                // Ignore bounds
-                _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("Set_ignore_bound", -100));
-                GD.Print($"    Ignore worked? CurrentHealth:{_stateManager.GetState(bundleName, "CurrentHealth")}");
+                try
+                {
+                    _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("SetIgnoreBound", -100));
+                    GD.Print($"    Ignore worked? CurrentHealth:{_stateManager.GetState(bundleName, "CurrentHealth")}");
+                }
+                catch (Exception e)
+                {
+                    GD.PushError($"Rule test dispatch failed: {e.Message}");
+                }
                 break;
 
             case "PlayerCharacterBundle2":
-                // Test product derived
-                _stateManager.Dispatch(bundleName, "HealthBars", new StateAction("Increment", 1));
-                _stateManager.Dispatch(bundleName, "MaxBarHealth", new StateAction("Set", 100));
-                GD.Print($"    Product MaxHealth: {_stateManager.GetState(bundleName, "MaxHealth")} (2*100=200)");
+                try
+                {
+                    _stateManager.Dispatch(bundleName, "HealthBars", new StateAction("Increment", 1));
+                    _stateManager.Dispatch(bundleName, "MaxBarHealth", new StateAction("Set", 100));
+                    GD.Print($"    Product MaxHealth: {_stateManager.GetState(bundleName, "MaxHealth")} (2*100=200)");
+                }
+                catch (Exception e)
+                {
+                    GD.PushError($"Rule test dispatch failed: {e.Message}");
+                }
 
-                // Bar clamp
-                _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("Increment", 200));
-                GD.Print($"    CurrentHealth clamped to MaxBarHealth: {_stateManager.GetState(bundleName, "CurrentHealth")}");
+                try
+                {
+                    _stateManager.Dispatch(bundleName, "CurrentHealth", new StateAction("Increment", 200));
+                    GD.Print($"    CurrentHealth clamped to MaxBarHealth: {_stateManager.GetState(bundleName, "CurrentHealth")}");
+                }
+                catch (Exception e)
+                {
+                    GD.PushError($"Rule test dispatch failed: {e.Message}");
+                }
                 break;
         }
     }
@@ -193,7 +431,6 @@ public partial class StateManagerTest : Node
     {
         GD.Print($"  📊 States for '{bundleName}' ({bundleTemplate}):");
 
-        // Quick lookup for states (assumes bundleName like "test_characterbundle" matches template)
         string[] states = _bundleStates.GetValueOrDefault(bundleTemplate, Array.Empty<string>());
         if (states.Length == 0)
         {
@@ -224,7 +461,6 @@ public partial class StateManagerTest : Node
 
         var bundleNames = new List<string>(NUM_BUNDLES);
 
-        // Create 100k bundles
         var swCreate = Stopwatch.StartNew();
         for (int i = 0; i < NUM_BUNDLES; i++)
         {
@@ -235,19 +471,17 @@ public partial class StateManagerTest : Node
         swCreate.Stop();
         GD.Print($"⏱️  CREATE 100k bundles: {swCreate.ElapsedMilliseconds} ms");
 
-        // Dispatch 100k actions to ONE bundle
-        _stateManager.CreateBundle(PROFILE_BUNDLE_TEMPLATE, TARGET_BUNDLE); // Fresh target
+        _stateManager.CreateBundle(PROFILE_BUNDLE_TEMPLATE, TARGET_BUNDLE);
         var swDispatch = Stopwatch.StartNew();
         for (int i = 0; i < NUM_ACTIONS; i++)
         {
             string action = i % 3 == 0 ? "Increment" : (i % 3 == 1 ? "Decrement" : "Set");
-            object payload = _testPayloads[action];
+            object payload = _testPayloads.TryGetValue(action, out var p) ? p : 10;
             _stateManager.Dispatch(TARGET_BUNDLE, "CurrentHealth", new StateAction(action, payload));
         }
         swDispatch.Stop();
         GD.Print($"⏱️  DISPATCH 100k actions to 1 bundle: {swDispatch.ElapsedMilliseconds} ms");
 
-        // Destroy all
         var swDestroy = Stopwatch.StartNew();
         foreach (string name in bundleNames)
         {

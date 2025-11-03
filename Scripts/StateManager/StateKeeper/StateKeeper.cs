@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using EroJRPG.Scripts.StateManager.TemplateDirectory;
+using Godot;
 
 namespace EroJRPG.Scripts.StateManager.StateKeeper;
 public class StateKeeper
 {
     public object StateDefaultValue { get; set; }
-    public string StateDefaultType { get; set; }
+    public Type StateDefaultType { get; set; }
     public string StateName { get; private set; } = "";
     public List<object> Dependencies { get; private set; } = []; // What I depend on
     public HashSet<StateKeeper> DependentKeepers { get; private set; } = []; // What depends on me
@@ -23,6 +24,16 @@ public class StateKeeper
         StateDefaultValue = newDefaultValue;
         DerivedState = isDerived;
         SetupKeeper(newKeeperTemplate);
+
+        /*
+        GD.Print($"Keeper Name: {StateName}");
+        GD.Print($"Actions");
+
+        foreach (var (action, _) in ActionHandlers)
+        {
+            GD.Print($"   Keeper Name: {action}");
+        }
+        */
     }
     public Dictionary<string, object> HandleAction(Dictionary<string, object> currentStateBundle, StateAction currentAction)
     {
@@ -62,7 +73,7 @@ public class StateKeeper
     }
     public object RunBidirectionalLogicRules(Dictionary<string, object> currentStateBundle, Dictionary<string, object> oldStateBundle)
     {
-        object new_state = currentStateBundle[StateName];
+        object new_state = oldStateBundle[StateName];
         foreach (var (logic_rule_name, state_logic_rule) in StateLogicRules)
         {
             if (state_logic_rule.IsBidirectional)

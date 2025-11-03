@@ -33,18 +33,16 @@ public class StateBundle
         {
             KeeperTemplate current_keeper_template = TemplateLoader.KeeperTemplates[bundle_state_template.Keeper];
 
-            //TODO: implement functionality of JSON "Type" field here
-            // potentially add alternative for Convert.ChangeType here
-
             if (bundle_state_template.Value != null)
             {
-                GD.Print($"{bundle_state_template.Value}, type is {bundle_state_template.Value.GetType()}");
-                Keepers.Add(state_name, new StateKeeper(state_name, Convert.ChangeType(bundle_state_template.Value, bundle_state_template.Type), current_keeper_template));
+                Keepers.Add(state_name, new StateKeeper(state_name, bundle_state_template.Value, current_keeper_template));
             }
             else
             {
                 Keepers.Add(state_name, new StateKeeper(state_name, null, current_keeper_template, true));
             }
+
+            Keepers[state_name].StateDefaultType = bundle_state_template.Type;
 
             if (bundle_state_template.Dependencies != null)
             {

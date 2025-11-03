@@ -9,25 +9,25 @@ public static class StateActionHandlers
     public static readonly Dictionary<string, Func<object, object, object>> Handlers = new()
     {
         {
-            "handleSet", (currentState, payload) =>
+            "Set", (currentState, payload) =>
             {
                 return payload;
             }
         },
         {
-            "handleIncrement", (currentState, payload) =>
+            "Increment", (currentState, payload) =>
             {
                 return NumericUtilities.Operation(currentState, payload, "add");
             }
         },
         {
-            "handleDecrement", (currentState, payload) =>
+            "Decrement", (currentState, payload) =>
             {
                 return NumericUtilities.Operation(currentState, payload, "sub");
             }
         },
         {
-            "handleFlip", (currentState, payload) =>
+            "Flip", (currentState, payload) =>
             {
                 return !(bool)currentState;
             }

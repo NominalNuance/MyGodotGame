@@ -2,43 +2,43 @@
   "BasicKeeper": {
 	"Actions": {
 	  "Set": {
-		"Handler": "HandleSet"
+		"Handler": "Set"
 	  }
 	}
   },
   "BoolKeeper": {
 	"Actions": {
 	  "Set": {
-		"Handler": "HandleSet"
+		"Handler": "Set"
 	  },
 	  "Flip": {
-		"Handler": "HandleFlip"
+		"Handler": "Flip"
 	  }
 	}
   },
   "NumericalKeeper": {
 	"Actions": {
 	  "Set": {
-		"Handler": "HandleSet"
+		"Handler": "Set"
 	  },
 	  "Increment": {
-		"Handler": "HandleIncrement"
+		"Handler": "Increment"
 	  },
 	  "Decrement": {
-		"Handler": "HandleDecrement"
+		"Handler": "Decrement"
 	  }
 	}
   },
   "BoundedKeeper": {
 	"Actions": {
 	  "Set": {
-		"Handler": "HandleSet"
+		"Handler": "Set"
 	  },
 	  "Increment": {
-		"Handler": "HandleIncrement"
+		"Handler": "Increment"
 	  },
 	  "Decrement": {
-		"Handler": "HandleDecrement"
+		"Handler": "Decrement"
 	  }
 	},
 	"LogicRules": {
@@ -48,13 +48,13 @@
   "ProportionalBoundedKeeper": {
 	"Actions": {
 	  "Set": {
-		"Handler": "HandleSet"
+		"Handler": "Set"
 	  },
 	  "Increment": {
-		"Handler": "HandleIncrement"
+		"Handler": "Increment"
 	  },
 	  "Decrement": {
-		"Handler": "HandleDecrement"
+		"Handler": "Decrement"
 	  }
 	},
 	"LogicRules": {
@@ -64,22 +64,22 @@
   "ThatDamnKeeper": {
 	"Actions": {
 	  "Set": {
-		"Handler": "HandleSet"
+		"Handler": "Set"
 	  },
 	  "Increment": {
-		"Handler": "HandleIncrement"
+		"Handler": "Increment"
 	  },
 	  "Decrement": {
-		"Handler": "HandleDecrement"
+		"Handler": "Decrement"
 	  },
-	  "Set_ignore_bound": {
-		"Handler": "HandleSet",
+	  "SetIgnoreBound": {
+		"Handler": "Set",
 		"Ignores": [
           "BoundRule"
 		]
 	  },
-	  "Increment_ignore_bound": {
-		"Handler": "HandleIncrement",
+	  "IncrementIgnoreBound": {
+		"Handler": "Increment",
 		"Ignores": [
           "BoundRule"
 		]
