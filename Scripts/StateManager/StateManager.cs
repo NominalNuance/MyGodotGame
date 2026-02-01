@@ -75,7 +75,7 @@ public partial class StateManager : Node
 
     public void Subscribe(string bundleName, string stateName, object subscriber, Action<object> callbackFunction, Func<object, bool> conditional = null)
     {
-       if (StateDictionary.TryGetValue(bundleName, out Dictionary<string, State> bundle_state_dict))
+        if (StateDictionary.TryGetValue(bundleName, out Dictionary<string, State> bundle_state_dict))
         {
             if(bundle_state_dict.TryGetValue(stateName, out State state))
             {

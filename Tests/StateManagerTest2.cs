@@ -25,6 +25,7 @@ public partial class StateManagerTest2 : Node
         GD.Print("Creating Player Character bundle");
         GD.Print("-----------------------");
         _stateManager.CreateBundle("PlayerCharacterBundle", "test2");
+        _stateManager.Subscribe("test2", "CurrentHealth", this, CallbackTest, (currentState) => { return (int)currentState < 60; });
         GD.Print($"Current Health, type is {_stateManager.GetState("test2", "CurrentHealth").GetType()}");
         GD.Print($"Before Dispatch Current Health: {_stateManager.GetState("test2", "CurrentHealth")}");
         _stateManager.Dispatch("test2", "CurrentHealth", new StateAction("Decrement", 10));
@@ -36,4 +37,9 @@ public partial class StateManagerTest2 : Node
 
     }
     
+    private void CallbackTest(object value)
+    {
+        GD.Print($"Callback triggered! State value is {value}.");
+    }
+
 }

@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://bm3rffexbcnwb"]
+
+[ext_resource type="LabelSettings" uid="uid://cjr6f4dydgcbp" path="res://Resources/default-label-setting.tres" id="1_cy2de"]
+[ext_resource type="Script" uid="uid://cmk1mv4wl6x4t" path="res://UI/Primitives/StatCounter.cs" id="2_ldn1w"]
+
+[node name="StatCounter" type="Label" unique_id=363400307]
+offset_right = 40.0
+offset_bottom = 23.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "56"
+label_settings = ExtResource("1_cy2de")
+script = ExtResource("2_ldn1w")
+BundleName = "test"
+StateName = "test"

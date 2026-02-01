@@ -60,7 +60,12 @@ public class State(string newName, object newValue)
         }
 
         //TODO: check to make sure the current listenerFunction and conditional do not already exist
-        payload_list.Add( new ListenerPayload(listenerFunction, conditional));
+        payload_list.Add(new ListenerPayload(listenerFunction, conditional));
+
+        if (conditional(CurrentState))
+        {
+            listenerFunction(CurrentState);
+        }
 
     }
 
