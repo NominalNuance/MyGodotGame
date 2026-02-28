@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://datq4rudeaiug" path="res://UI/Primitives/DynamicTextContainer.cs" id="1_7jafl"]
 [ext_resource type="LabelSettings" uid="uid://cjr6f4dydgcbp" path="res://Resources/default-label-setting.tres" id="1_jyavx"]
+[ext_resource type="Texture2D" uid="uid://b0x4ok222ui0t" path="res://Assets/Screenshot_20260122_082409.png" id="2_kvuf3"]
 [ext_resource type="PackedScene" uid="uid://bm3rffexbcnwb" path="res://UI/Primitives/Stat Counter.tscn" id="3_kvuf3"]
 
 [node name="DynamicTextContainer" type="Control" unique_id=2005722307]
@@ -12,6 +13,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_7jafl")
+Content = "test"
+Image = ExtResource("2_kvuf3")
+BundleName = "test"
+StateName = "test"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1013979701]
 layout_mode = 0
@@ -19,12 +24,15 @@ offset_right = 223.0
 offset_bottom = 46.0
 
 [node name="TextureRect" type="TextureRect" parent="HBoxContainer" unique_id=621991229]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="Label" type="Label" parent="HBoxContainer" unique_id=765939497]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 1
 label_settings = ExtResource("1_jyavx")
 
 [node name="StatCounter" parent="HBoxContainer" unique_id=363400307 instance=ExtResource("3_kvuf3")]
+unique_name_in_owner = true
 layout_mode = 2
