@@ -13,8 +13,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_7jafl")
-Content = "test"
-Image = ExtResource("2_kvuf3")
+_image = ExtResource("2_kvuf3")
 BundleName = "test"
 StateName = "test"
 

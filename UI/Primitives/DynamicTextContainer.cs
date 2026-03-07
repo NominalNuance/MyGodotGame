@@ -3,25 +3,23 @@ using System;
 
 public partial class DynamicTextContainer : Control
 {
-    private string _content;
-    [Export] public string Content
+    [Export] private string _content;
+    public string Content
     {
-        get { return _content; }
+        get { return Content; }
         set 
         { 
-            _content = value; 
-            if (ThisLabel != null) ThisLabel.Text = value;
+            ThisLabel.Text = value;
         }
     }
 
-    private Texture2D _image;
-    [Export] public Texture2D Image
+    [Export] private Texture2D _image;
+    public Texture2D Image
     {
-        get { return _image; }
+        get { return Image; }
         set 
         { 
-            _image = value; 
-            if (ThisTextureRect != null) ThisTextureRect.Texture = value;
+            ThisTextureRect.Texture = value;
         }
     }
 
