@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://c1ftwjffhp41j"]
 
 [ext_resource type="Texture2D" uid="uid://cukskm16pl468" path="res://Assets/UI/Cursor Select-export.png" id="1_d5s3p"]
+[ext_resource type="Script" uid="uid://blticxqjbngpt" path="res://UI/Primitives/Cursor.cs" id="2_dpr4j"]
 
 [node name="Cursor" type="TextureRect" unique_id=1148804156]
 anchors_preset = 15
@@ -12,3 +13,4 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("1_d5s3p")
 stretch_mode = 2
+script = ExtResource("2_dpr4j")
