@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bs1iou0sjy0im" path="res://UI/Primitives/SelectionBox.cs" id="1_brao3"]
 [ext_resource type="LabelSettings" uid="uid://cjr6f4dydgcbp" path="res://Resources/default-label-setting.tres" id="2_depfd"]
+[ext_resource type="PackedScene" uid="uid://c1ftwjffhp41j" path="res://UI/Primitives/cursor.tscn" id="3_depfd"]
 
 [node name="SelectionBox" type="Control" unique_id=671780267]
 layout_mode = 3
@@ -30,6 +31,8 @@ grow_vertical = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
+focus_neighbor_top = NodePath("../Label4")
+focus_neighbor_bottom = NodePath("../Label2")
 mouse_filter = 0
 text = "Option 1"
 label_settings = ExtResource("2_depfd")
@@ -40,6 +43,8 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
+focus_neighbor_top = NodePath("../Label")
+focus_neighbor_bottom = NodePath("../Label3")
 mouse_filter = 0
 text = "Option 2"
 label_settings = ExtResource("2_depfd")
@@ -50,6 +55,8 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
+focus_neighbor_top = NodePath("../Label2")
+focus_neighbor_bottom = NodePath("../Label4")
 mouse_filter = 0
 text = "Option 3"
 label_settings = ExtResource("2_depfd")
@@ -60,11 +67,17 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
+focus_neighbor_top = NodePath("../Label3")
+focus_neighbor_bottom = NodePath("../Label")
 mouse_filter = 0
 text = "Option 4"
 label_settings = ExtResource("2_depfd")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Cursor" parent="." unique_id=1148804156 instance=ExtResource("3_depfd")]
+layout_mode = 0
+anchors_preset = 0
 
 [connection signal="mouse_entered" from="VBoxContainer/Label" to="." method="_on_label_mouse_entered"]
 [connection signal="mouse_entered" from="VBoxContainer/Label2" to="." method="_on_label_2_mouse_entered"]

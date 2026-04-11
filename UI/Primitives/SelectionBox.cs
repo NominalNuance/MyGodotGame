@@ -1,79 +1,52 @@
 using Godot;
 using System;
+using System.Numerics;
 
 public partial class SelectionBox : Control
 {
-    private Label ThisLabel;
-    private Label ThisLabel2;
-    private Label ThisLabel3;
-    private Label ThisLabel4;
-    public override void _Ready()
-    {
-        ThisLabel = GetNode<Label>("%Label");
-        ThisLabel.FocusMode = FocusModeEnum.All;
-        ThisLabel.MouseEntered += LabelMoused;
-        ThisLabel.FocusEntered += LabelFocused;
+	TextureRect thisCursor;
+	public override void _Ready()
+	{
 
-        ThisLabel2 = GetNode<Label>("%Label2");
-        ThisLabel2.FocusMode = FocusModeEnum.All;
-        ThisLabel2.MouseEntered += LabelMoused2;
-        ThisLabel2.FocusEntered += LabelFocused2;
+		Godot.Collections.Array<Node> labels = GetNode("VBoxContainer").GetChildren();
+		thisCursor = GetNode<TextureRect>("Cursor");
 
-        ThisLabel3 = GetNode<Label>("%Label3");
-        ThisLabel3.FocusMode = FocusModeEnum.All;
-        ThisLabel3.MouseEntered += LabelMoused3;
-        ThisLabel3.FocusEntered += LabelFocused3;
+		foreach (Node child in labels) 
+		{
+			if (child is Label label)
+			{
+				label.FocusMode = FocusModeEnum.All;
+				label.MouseEntered += () => LabelMoused(label, label.Text);
+				label.FocusEntered += () => LabelFocused(label, label.Text);
+			}
+		}
 
-        ThisLabel4 = GetNode<Label>("%Label4");
-        ThisLabel4.FocusMode = FocusModeEnum.All;
-        ThisLabel4.MouseEntered += LabelMoused4;
-        ThisLabel4.FocusEntered += LabelFocused4;
+		if (GetNode("VBoxContainer").GetChild(0) is Label first)
+		{
+			first.GrabFocus();
+			MoveCursor(first);
+		}
+		
+	}
 
-        ThisLabel.GrabFocus();
-        
-    }
+	private void LabelMoused(Label label, string labelName)
+	{
+		label.GrabFocus();
+		MoveCursor(label);
+		GD.Print($"{labelName} focused by mouse");
+	}
+	private void LabelFocused(Label label, string labelName)
+	{
+		label.GrabFocus();
+		MoveCursor(label);
+		GD.Print($"{labelName} has been focused");
+	}
 
-    private void LabelMoused()
-    {
-        ThisLabel.GrabFocus();
-        GD.Print("Option 1 focused by mouse");
-    }
-    private void LabelFocused()
-    {
-        ThisLabel.GrabFocus();
-        GD.Print("Option 1 has been focused");
-    }
-
-    private void LabelMoused2()
-    {
-        ThisLabel2.GrabFocus();
-        GD.Print("Option 2 focused by mouse");
-    }
-    private void LabelFocused2()
-    {
-        ThisLabel2.GrabFocus();
-        GD.Print("Option 2 has been focused");
-    }
-
-    private void LabelMoused3()
-    {
-        ThisLabel3.GrabFocus();
-        GD.Print("Option 3 focused by mouse");
-    }
-    private void LabelFocused3()
-    {
-        ThisLabel3.GrabFocus();
-        GD.Print("Option 3 has been focused");
-    }
-
-    private void LabelMoused4()
-    {
-        ThisLabel4.GrabFocus();
-        GD.Print("Option 4 focused by mouse");
-    }
-    private void LabelFocused4()
-    {
-        ThisLabel4.GrabFocus();
-        GD.Print("Option 4 has been focused");
-    }
+	private void MoveCursor(Control someNode)
+	{
+		Godot.Vector2 new_cursor_position = someNode.Position;
+		new_cursor_position.X -= thisCursor.Size.X + 5;
+		thisCursor.Position = new_cursor_position;
+		thisCursor.Visible = true;
+	}
 }
