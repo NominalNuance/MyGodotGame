@@ -13,7 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_brao3")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1756392570]
+[node name="OptionsContainer" type="VBoxContainer" parent="." unique_id=1756392570]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -27,48 +27,40 @@ offset_bottom = 163.5
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="VBoxContainer" unique_id=1723513467]
+[node name="Label" type="Label" parent="OptionsContainer" unique_id=1723513467]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
-focus_neighbor_top = NodePath("../Label4")
-focus_neighbor_bottom = NodePath("../Label2")
 mouse_filter = 0
 text = "Option 1"
 label_settings = ExtResource("2_depfd")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Label2" type="Label" parent="VBoxContainer" unique_id=1685149903]
+[node name="Label2" type="Label" parent="OptionsContainer" unique_id=1685149903]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
-focus_neighbor_top = NodePath("../Label")
-focus_neighbor_bottom = NodePath("../Label3")
 mouse_filter = 0
 text = "Option 2"
 label_settings = ExtResource("2_depfd")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Label3" type="Label" parent="VBoxContainer" unique_id=987731669]
+[node name="Label3" type="Label" parent="OptionsContainer" unique_id=987731669]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
-focus_neighbor_top = NodePath("../Label2")
-focus_neighbor_bottom = NodePath("../Label4")
 mouse_filter = 0
 text = "Option 3"
 label_settings = ExtResource("2_depfd")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Label4" type="Label" parent="VBoxContainer" unique_id=510986909]
+[node name="Label4" type="Label" parent="OptionsContainer" unique_id=510986909]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 6
-focus_neighbor_top = NodePath("../Label3")
-focus_neighbor_bottom = NodePath("../Label")
 mouse_filter = 0
 text = "Option 4"
 label_settings = ExtResource("2_depfd")
@@ -86,7 +78,7 @@ offset_bottom = 0.0
 grow_horizontal = 1
 grow_vertical = 1
 
-[connection signal="mouse_entered" from="VBoxContainer/Label" to="." method="_on_label_mouse_entered"]
-[connection signal="mouse_entered" from="VBoxContainer/Label2" to="." method="_on_label_2_mouse_entered"]
-[connection signal="mouse_entered" from="VBoxContainer/Label3" to="." method="_on_label_3_mouse_entered"]
-[connection signal="mouse_entered" from="VBoxContainer/Label4" to="." method="_on_label_4_mouse_entered"]
+[connection signal="mouse_entered" from="OptionsContainer/Label" to="." method="_on_label_mouse_entered"]
+[connection signal="mouse_entered" from="OptionsContainer/Label2" to="." method="_on_label_2_mouse_entered"]
+[connection signal="mouse_entered" from="OptionsContainer/Label3" to="." method="_on_label_3_mouse_entered"]
+[connection signal="mouse_entered" from="OptionsContainer/Label4" to="." method="_on_label_4_mouse_entered"]
