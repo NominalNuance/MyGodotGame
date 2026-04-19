@@ -90,62 +90,35 @@ public partial class SelectionBox : Control
 			current.FocusNeighborLeft = previous.GetPath();
 		}
 	}
-
-//clean this up
 	private void SetupGridNeighbors(GridContainer gridOptions)
 	{
 		int count = menuOptions.Count;
 		int columns = gridOptions.Columns;
-		int rows = (int)Math.Ceiling((double)(count / columns));
+		int rows = (int)Math.Ceiling((double)count / columns);
 
 		for (int i = 0; i < count; i++)
 		{
-			Control current = menuOptions[i];
-			Control right;
-			Control left;
-			Control down;
-			Control up;
 
-			if ((i % columns) + 1 == columns)
-			{
-				right =  menuOptions[(int)Math.Floor((double)(i / columns)) * columns];
-			}
-			else
-			{
-				right = menuOptions[i + 1];
-			}
+			int current_column = i % columns;
+			int current_row = i / columns;
 
-			if ((i % columns) == 0)
-			{
-				left =  menuOptions[((int)Math.Floor((double)(i / columns) + 1) * columns) - 1];
-			}
-			else
-			{
-				left = menuOptions[i - 1];
-			}
+			int row_start = current_row * columns;
+			int row_end = Math.Min(row_start + (columns - 1), count - 1);
+			int column_start = current_column;
+			int column_end = current_column + (columns * (rows - 1));
+			column_end = (column_end >= count) ? column_end - columns : column_end;
 
-			if (i >= (columns * (rows - 1)))
-			{
-				down =  menuOptions[i % columns];
-			}
-			else
-			{
-				down = menuOptions[i + columns];
-			}
+			Control current_option = menuOptions[i];
 
-			if (i < columns)
-			{
-				up =  menuOptions[i + ((columns - 1) * rows)];
-			}
-			else
-			{
-				up = menuOptions[i - columns];
-			}
-			
-			current.FocusNeighborRight = right.GetPath();
-			current.FocusNeighborLeft = left.GetPath();
-			current.FocusNeighborBottom = down.GetPath();
-			current.FocusNeighborTop = up.GetPath();
+			int right_index = (i == row_end) ? row_start : i + 1; 
+			int left_index = (current_column == 0) ? row_end: i - 1; 
+			int down_index = (i == column_end) ? column_start : i + columns; 
+			int up_index = (current_row == 0) ? column_end : i - columns; 
+
+			current_option.FocusNeighborRight  = menuOptions[right_index].GetPath();
+			current_option.FocusNeighborLeft   = menuOptions[left_index].GetPath();
+			current_option.FocusNeighborBottom = menuOptions[down_index].GetPath();
+			current_option.FocusNeighborTop    = menuOptions[up_index].GetPath();
 		}
 
 	}
