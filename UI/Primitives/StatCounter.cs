@@ -16,7 +16,7 @@ public partial class StatCounter : Label
         TargetState = (BundleName, StateName);
         
         SM.Subscribe(TargetState.BundleName, TargetState.StateName, this, UpdateCounter);
-        Text = "Pingas";
+        //Text = "Pingas";
     }
 
     public void ChangeSubscribedState (string newBundleName, string newStateName)

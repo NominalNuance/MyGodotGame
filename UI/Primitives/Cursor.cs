@@ -8,7 +8,7 @@ public partial class Cursor : TextureRect
 	{
         Vector2 new_cursor_position = someNode.GlobalPosition;
 		new_cursor_position.X -= Size.X + 5;
-        new_cursor_position.Y -= (Size.Y / 2) - (someNode.Size.Y / 1.5f);
+        new_cursor_position.Y -= (Size.Y / 2) - (someNode.Size.Y / 2.0f);
 		GlobalPosition = new_cursor_position;
 		Visible = true;
 	}
