@@ -1,19 +1,15 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 
 namespace EroJRPG.UI.Primitives;
+
+//TODO: Have some way for specific SelectionBoxes to define what 'cancel' does and let the UIManager know.
 public partial class SelectionBox : Control
 {
-	[Signal]
-	public delegate void FocusedEventHandler(string focusedString);
-
-	[Signal]
-	public delegate void ConfirmEventHandler(string confirmString);
-
-	[Signal]
-	public delegate void CancelEventHandler(string cancelString);
+	public event Action<UIEvent> Focused;
+	public event Action<UIEvent> Confirmed;
+	public event Action Canceled;
 
     private Cursor ThisCursor;
 
@@ -21,7 +17,7 @@ public partial class SelectionBox : Control
 	public Control OptionsContainer;
 	
 	//There should be a public interface for this to allow for the addition of options and removal of options
-	private List<Control> MenuOptions = [];
+	private List<DynamicTextContainer> MenuOptions = [];
 	public override void _Ready()
 	{
 
@@ -50,6 +46,7 @@ public partial class SelectionBox : Control
 
 	public void BuildOptions()
 	{
+		UnsubscribeOptions();
 		MenuOptions.Clear();
 		if (OptionsContainer == null)
 		{
@@ -62,11 +59,11 @@ public partial class SelectionBox : Control
 			if (child is DynamicTextContainer control)
 			{
 				control.FocusMode = FocusModeEnum.All;
-				control.MouseEntered += () => OptionMoused(control);
+				control.OptionMoused += OptionMoused;
+				control.OptionFocused += OptionFocused;
+				control.OptionConfirmed += OptionConfirmReceived;
+				control.OptionCanceled += OptionCancelReceived;
 
-				control.Connect(DynamicTextContainer.SignalName.OptionFocused, Callable.From<string, DynamicTextContainer>(OptionFocused));
-				control.Connect(DynamicTextContainer.SignalName.OptionConfirm, Callable.From<string>(OptionConfirmReceived));
-				control.Connect(DynamicTextContainer.SignalName.OptionCancel, Callable.From<string>(OptionCancelReceived));
 				MenuOptions.Add(control);
 			}
 		}
@@ -77,6 +74,21 @@ public partial class SelectionBox : Control
 		}
 	}
 
+	private void UnsubscribeOptions()
+	{
+		foreach (DynamicTextContainer control in MenuOptions) 
+		{
+			control.OptionMoused -= OptionMoused;
+			control.OptionFocused -= OptionFocused;
+			control.OptionConfirmed -= OptionConfirmReceived;
+			control.OptionCanceled -= OptionCancelReceived;
+		}
+	}
+
+	public override void _ExitTree()
+	{
+		UnsubscribeOptions();
+	}
 	private void SetupFocusNeighbors()
 	{
 		if (OptionsContainer is VBoxContainer)
@@ -171,24 +183,24 @@ public partial class SelectionBox : Control
 		mousedObject.GrabFocus();
 		GD.Print("An option has been moused.");
 	}
-	private void OptionFocused(string focusedString, DynamicTextContainer focusedObject)
+	private void OptionFocused(DynamicTextContainer focusedObject, UIEvent focusEvent)
 	{
 		ThisCursor.MoveCursor(focusedObject);
 		GD.Print("An option has been focused.");
-		EmitSignal(SignalName.Focused, focusedString);
+		Focused?.Invoke(focusEvent);
 	}
 
-	private void OptionConfirmReceived(string confirmString)
+	private void OptionConfirmReceived(UIEvent confirmEvent)
 	{
 		GD.Print("An option has been confirmed.");
-		EmitSignal(SignalName.Confirm, confirmString);
+		Confirmed?.Invoke(confirmEvent);
 			
 	}
 
-	private void OptionCancelReceived(string cancelString)
+	private void OptionCancelReceived()
 	{
 		GD.Print("An option has been cancelled");
-		EmitSignal(SignalName.Cancel, cancelString);
+		Canceled?.Invoke();
 	}
 
 }
