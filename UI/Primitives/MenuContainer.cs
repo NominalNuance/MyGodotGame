@@ -11,14 +11,17 @@ namespace EroJRPG.UI.Primitives;
 //What is the relationship between the MenuContainer and the UIManager?
 public partial class MenuContainer : Control
 {
-	public event Action<UIEvent> FocusReceived;
-	public event Action<UIEvent> ConfirmReceived;
-	public event Action<UIEvent> CancelReceived;
+	public event Action<Command> FocusReceived;
+	public event Action<Command> ConfirmReceived;
+	public event Action<Command> CancelReceived;
 
 
 	//MenuContainers can contain at most one SelectionBox. MenuContainers can also contain other MenuContainers at the same time
 	//If a MenuContainer needs more than one selection box for some reason, then use a nested MenuContainer.
 	[Export] public SelectionBox ThisSelectionBox;
+
+	[Export] public Control DefaultFocusTarget = null;
+
 
 	//This should only hold Directly nested MenuContainers, if any. 
 	[Export] public Godot.Collections.Array<MenuContainer> NestedMenuContainers = [];
@@ -35,6 +38,7 @@ public partial class MenuContainer : Control
 			ThisSelectionBox.Canceled += OptionCancelReceived;
 		}
 
+		PrivateMenuContainers.Clear();
 		if (NestedMenuContainers.Count > 0)
 		{
 			foreach (MenuContainer menu_container in NestedMenuContainers)
@@ -42,7 +46,7 @@ public partial class MenuContainer : Control
 				ValidateNestedContainer(menu_container);
 				if(!PrivateMenuContainers.Add(menu_container))
 				{
-					GD.PushWarning("A menu container has duplicate entries in it's nested menu container.");
+					GD.PushWarning("A menu container has duplicate entries in its nested menu container.");
 				}
 			}
 			foreach (MenuContainer unique_menu_container in PrivateMenuContainers)
@@ -52,17 +56,21 @@ public partial class MenuContainer : Control
 				unique_menu_container.CancelReceived += OptionCancelReceived;
 			}
 		}
+		if (ThisSelectionBox != null && DefaultFocusTarget == null)
+		{
+			DefaultFocusTarget = ThisSelectionBox;
+		}
 	}
 
 	private void ValidateNestedContainer(MenuContainer suspect)
 	{
-		if (suspect == this)
-		{
-			throw new Exception("A menu container was assigned itself as a nested container in the insepctor!");
-		}
-		else if (suspect == null)
+		if (suspect == null)
 		{
 			throw new Exception("A menu container has an empty nested container slot in the inspector!");
+		}
+		else if (suspect == this)
+		{
+			throw new Exception("A menu container was assigned itself as a nested container in the insepctor!");
 		}
 	}
 	private void Unsubscribe()
@@ -90,25 +98,36 @@ public partial class MenuContainer : Control
 		Unsubscribe();
 	}
 
-	private void OnFocusGained()
+	public void DefaultFocus()
 	{
-		ThisSelectionBox.GrabFocus();
+		if (DefaultFocusTarget is SelectionBox selection_box_focus)
+		{
+			selection_box_focus.CallDeferred("SelectFirstOption");
+		}
+		else if (DefaultFocusTarget is MenuContainer menu_container_focus)
+		{
+			menu_container_focus.CallDeferred("DefaultFocus");
+		}
+		else
+		{
+			GD.PushWarning("A MenuContainer received focus when it has no focus target! Was this intentional?");
+		}
 	}
 
-	private void OptionFocused(UIEvent focusEvent)
+	private void OptionFocused(Command focusEvent)
 	{
 		GD.Print("A menu container received a focus event.");
 		FocusReceived?.Invoke(focusEvent);
 	}
 
-	private void OptionConfirmReceived(UIEvent confirmEvent)
+	private void OptionConfirmReceived(Command confirmEvent)
 	{
 		GD.Print("A menu container received a confirm event.");
 		ConfirmReceived?.Invoke(confirmEvent);
 			
 	}
 
-	private void OptionCancelReceived(UIEvent cancelEvent)
+	private void OptionCancelReceived(Command cancelEvent)
 	{
 		GD.Print("A menu container received a cancel event.");
 		CancelReceived?.Invoke(cancelEvent);

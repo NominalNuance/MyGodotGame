@@ -6,8 +6,8 @@ public partial class DynamicTextContainer : Control
 {
 
     public event Action<DynamicTextContainer> OptionMoused;
-    public event Action<DynamicTextContainer, UIEvent> OptionFocused;
-    public event Action<UIEvent> OptionConfirmed;
+    public event Action<DynamicTextContainer, Command> OptionFocused;
+    public event Action<Command> OptionConfirmed;
     public event Action OptionCanceled;
 
     [Export] private string _content;
@@ -37,8 +37,8 @@ public partial class DynamicTextContainer : Control
 
     //This is meant to hold the information for what happens when the option is "confirmed"
     //To be consumed by the UIManager
-    [Export] public UIEvent ConfirmData = new("confirm", "confirm");
-    [Export] public UIEvent FocusData = new("focus", "focus");
+    [Export] public Command ConfirmData;
+    [Export] public Command FocusData;
 
     private Label ThisLabel;
     private TextureRect ThisTextureRect;

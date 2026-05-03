@@ -7,15 +7,15 @@ namespace EroJRPG.UI.Primitives;
 //TODO: Have some way for specific SelectionBoxes to define what 'cancel' does and let the UIManager know.
 public partial class SelectionBox : Control
 {
-	public event Action<UIEvent> Focused;
-	public event Action<UIEvent> Confirmed;
-	public event Action<UIEvent> Canceled;
+	public event Action<Command> Focused;
+	public event Action<Command> Confirmed;
+	public event Action<Command> Canceled;
 
     private Cursor ThisCursor;
 
 	[Export] public Control OptionsContainer;
 
-	[Export] public UIEvent CancelData = new();
+	[Export] public Command CancelData = new();
 	
 	//There should be a public interface for this to allow for the addition of options and removal of options
 	private List<DynamicTextContainer> MenuOptions = [];
@@ -35,14 +35,12 @@ public partial class SelectionBox : Control
 		if (MenuOptions.Count > 0)
 		{
 			//This line is for testing. The UIManager should eventually be the one to decide which UI elements gain or lose focus.
-			CallDeferred(nameof(SelectFirstOption));
+			//CallDeferred(nameof(SelectFirstOption));
 		}
 		else
 		{
 			GD.PrintErr("A Selection box has no options! Are you testing some code?");
 		}
-
-		FocusEntered += OnFocusGained;
 		
 	}
 
@@ -169,11 +167,7 @@ public partial class SelectionBox : Control
 
 	}
 
-	private void OnFocusGained()
-	{
-		SelectFirstOption();
-	}
-    private void SelectFirstOption()
+    public void SelectFirstOption()
     {
         if (MenuOptions.Count > 0)
 		{
@@ -185,14 +179,14 @@ public partial class SelectionBox : Control
 		mousedObject.GrabFocus();
 		GD.Print("An option has been moused.");
 	}
-	private void OptionFocused(DynamicTextContainer focusedObject, UIEvent focusEvent)
+	private void OptionFocused(DynamicTextContainer focusedObject, Command focusEvent)
 	{
 		ThisCursor.MoveCursor(focusedObject);
 		GD.Print("An option has been focused.");
 		Focused?.Invoke(focusEvent);
 	}
 
-	private void OptionConfirmReceived(UIEvent confirmEvent)
+	private void OptionConfirmReceived(Command confirmEvent)
 	{
 		GD.Print("An option has been confirmed.");
 		Confirmed?.Invoke(confirmEvent);

@@ -18,7 +18,7 @@ public static class MenuLibrary
 {
     private static Dictionary<MenuID, PackedScene> MenuMap = new()
     {
-        {MenuID.TestMenu, ResourceLoader.Load<PackedScene>("res://UI/SelectionMenus/menu_options.tscn")},
+        {MenuID.TestMenu, ResourceLoader.Load<PackedScene>("res://UI/SelectionMenus/TestMenu.tscn")},
         {MenuID.MainMenu, null},
         {MenuID.Inventory, null},
         {MenuID.PauseMenu, null}
