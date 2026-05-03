@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bdyebvqtit66e"]
 
 [ext_resource type="PackedScene" uid="uid://c42mxm7fs2155" path="res://UI/Primitives/selection_box.tscn" id="1_cxv4c"]
+[ext_resource type="PackedScene" uid="uid://cjbf4c6rfant1" path="res://UI/Primitives/MenuContainer.tscn" id="1_v62l2"]
 [ext_resource type="LabelSettings" uid="uid://cjr6f4dydgcbp" path="res://Resources/default-label-setting.tres" id="2_osi1o"]
 [ext_resource type="PackedScene" uid="uid://ui0on4df3rl" path="res://UI/Primitives/Dynamic Text Container.tscn" id="3_osi1o"]
 
@@ -12,10 +13,24 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="MenuContainer" parent="." unique_id=1238761966 node_paths=PackedStringArray("NestedMenuContainers") instance=ExtResource("1_v62l2")]
+layout_mode = 1
+offset_top = 1.0
+offset_bottom = 1.0
+NestedMenuContainers = [NodePath("MenuContainer1"), NodePath("MenuContainer2"), NodePath("MenuContainer3")]
+
+[node name="MenuContainer1" parent="MenuContainer" unique_id=819368027 node_paths=PackedStringArray("ThisSelectionBox") instance=ExtResource("1_v62l2")]
+layout_mode = 1
+ThisSelectionBox = NodePath("../../SelectionBox")
+
+[node name="MenuContainer2" parent="MenuContainer" unique_id=85148148 instance=ExtResource("1_v62l2")]
+layout_mode = 1
+
+[node name="MenuContainer3" parent="MenuContainer" unique_id=1279387920 instance=ExtResource("1_v62l2")]
+layout_mode = 1
+
 [node name="SelectionBox" parent="." unique_id=671780267 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("1_cxv4c")]
 layout_mode = 1
-offset_left = 1.0
-offset_right = 1.0
 OptionsContainer = NodePath("GridContainer")
 
 [node name="OptionsContainer2" type="VBoxContainer" parent="SelectionBox" unique_id=1700264918]

@@ -9,12 +9,13 @@ public partial class SelectionBox : Control
 {
 	public event Action<UIEvent> Focused;
 	public event Action<UIEvent> Confirmed;
-	public event Action Canceled;
+	public event Action<UIEvent> Canceled;
 
     private Cursor ThisCursor;
 
-	[Export]
-	public Control OptionsContainer;
+	[Export] public Control OptionsContainer;
+
+	[Export] public UIEvent CancelData = new();
 	
 	//There should be a public interface for this to allow for the addition of options and removal of options
 	private List<DynamicTextContainer> MenuOptions = [];
@@ -33,6 +34,7 @@ public partial class SelectionBox : Control
 
 		if (MenuOptions.Count > 0)
 		{
+			//This line is for testing. The UIManager should eventually be the one to decide which UI elements gain or lose focus.
 			CallDeferred(nameof(SelectFirstOption));
 		}
 		else
@@ -200,7 +202,7 @@ public partial class SelectionBox : Control
 	private void OptionCancelReceived()
 	{
 		GD.Print("An option has been cancelled");
-		Canceled?.Invoke();
+		Canceled?.Invoke(CancelData);
 	}
 
 }

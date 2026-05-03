@@ -20,12 +20,10 @@ public partial class MenuContainer : Control
 	//If a MenuContainer needs more than one selection box for some reason, then use a nested MenuContainer.
 	[Export] public SelectionBox ThisSelectionBox;
 
-	//To be used in conjunction with a SelectionBox to define what 'Cancel' means in the given context.
-	//This is a required field if the SelectionBox field is filled
-	[Export] public UIEvent CancelData = new();
-
 	//This should only hold Directly nested MenuContainers, if any. 
 	[Export] public Godot.Collections.Array<MenuContainer> NestedMenuContainers = [];
+
+	private HashSet<MenuContainer> PrivateMenuContainers =[];
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -41,13 +39,32 @@ public partial class MenuContainer : Control
 		{
 			foreach (MenuContainer menu_container in NestedMenuContainers)
 			{
-				menu_container.FocusReceived += OptionFocused;
-				menu_container.ConfirmReceived += OptionConfirmReceived;
-				menu_container.CancelReceived += OptionCancelReceivedNested;
+				ValidateNestedContainer(menu_container);
+				if(!PrivateMenuContainers.Add(menu_container))
+				{
+					GD.PushWarning("A menu container has duplicate entries in it's nested menu container.");
+				}
+			}
+			foreach (MenuContainer unique_menu_container in PrivateMenuContainers)
+			{
+				unique_menu_container.FocusReceived += OptionFocused;
+				unique_menu_container.ConfirmReceived += OptionConfirmReceived;
+				unique_menu_container.CancelReceived += OptionCancelReceived;
 			}
 		}
 	}
 
+	private void ValidateNestedContainer(MenuContainer suspect)
+	{
+		if (suspect == this)
+		{
+			throw new Exception("A menu container was assigned itself as a nested container in the insepctor!");
+		}
+		else if (suspect == null)
+		{
+			throw new Exception("A menu container has an empty nested container slot in the inspector!");
+		}
+	}
 	private void Unsubscribe()
 	{
 		if (ThisSelectionBox != null)
@@ -57,13 +74,13 @@ public partial class MenuContainer : Control
 			ThisSelectionBox.Canceled -= OptionCancelReceived;
 		}
 
-		if (NestedMenuContainers.Count > 0)
+		if (PrivateMenuContainers.Count > 0)
 		{
-			foreach (MenuContainer menu_container in NestedMenuContainers)
+			foreach (MenuContainer menu_container in PrivateMenuContainers)
 			{
 				menu_container.FocusReceived -= OptionFocused;
 				menu_container.ConfirmReceived -= OptionConfirmReceived;
-				menu_container.CancelReceived -= OptionCancelReceivedNested;
+				menu_container.CancelReceived -= OptionCancelReceived;
 			}
 		}
 	}
@@ -71,6 +88,11 @@ public partial class MenuContainer : Control
 	public override void _ExitTree()
 	{
 		Unsubscribe();
+	}
+
+	private void OnFocusGained()
+	{
+		ThisSelectionBox.GrabFocus();
 	}
 
 	private void OptionFocused(UIEvent focusEvent)
@@ -86,13 +108,7 @@ public partial class MenuContainer : Control
 			
 	}
 
-	private void OptionCancelReceived()
-	{
-		GD.Print("A menu container received a cancel event.");
-		CancelReceived?.Invoke(CancelData);
-	}
-
-	private void OptionCancelReceivedNested(UIEvent cancelEvent)
+	private void OptionCancelReceived(UIEvent cancelEvent)
 	{
 		GD.Print("A menu container received a cancel event.");
 		CancelReceived?.Invoke(cancelEvent);
