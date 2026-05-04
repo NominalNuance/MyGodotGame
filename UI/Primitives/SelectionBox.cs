@@ -118,6 +118,9 @@ public partial class SelectionBox : Control
 
 			current.FocusNeighborBottom = next.GetPath();
 			current.FocusNeighborTop = previous.GetPath();
+
+			current.FocusNeighborRight = current.GetPath();
+			current.FocusNeighborLeft = current.GetPath();
 		}
 	}
 
@@ -133,6 +136,9 @@ public partial class SelectionBox : Control
 
 			current.FocusNeighborRight = next.GetPath();
 			current.FocusNeighborLeft = previous.GetPath();
+
+			current.FocusNeighborBottom = current.GetPath();
+			current.FocusNeighborTop = current.GetPath();
 		}
 	}
 	private void SetupGridNeighbors(GridContainer gridOptions)

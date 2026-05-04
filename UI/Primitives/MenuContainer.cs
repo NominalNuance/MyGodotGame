@@ -40,7 +40,7 @@ public partial class MenuContainer : Control
 
 	//This should only hold Directly nested MenuContainers, if any. 
 
-	[Export] public Godot.Collections.Dictionary<ControlGroups, MenuContainer> NestedMenuContainers = [];
+	[Export] private Godot.Collections.Dictionary<ControlGroups, MenuContainer> NestedMenuContainers = [];
 
 	private HashSet<MenuContainer> PrivateMenuContainers =[];
 
@@ -130,6 +130,10 @@ public partial class MenuContainer : Control
 		}
 	}
 
+	public MenuContainer GetNestedMenu(ControlGroups menuToGet)
+	{
+		return NestedMenuContainers[menuToGet];
+	}
 	private void OptionFocused(Command focusEvent)
 	{
 		GD.Print("A menu container received a focus event.");

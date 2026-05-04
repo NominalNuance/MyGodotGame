@@ -2,161 +2,91 @@
 
 [ext_resource type="PackedScene" uid="uid://cjbf4c6rfant1" path="res://UI/Primitives/MenuContainer.tscn" id="1_shoke"]
 [ext_resource type="PackedScene" uid="uid://c42mxm7fs2155" path="res://UI/Primitives/selection_box.tscn" id="2_m2027"]
-[ext_resource type="LabelSettings" uid="uid://cjr6f4dydgcbp" path="res://Resources/default-label-setting.tres" id="3_f5tkt"]
 [ext_resource type="PackedScene" uid="uid://ui0on4df3rl" path="res://UI/Primitives/Dynamic Text Container.tscn" id="4_esuxv"]
 
-[node name="MenuContainer" unique_id=1238761966 node_paths=PackedStringArray("DefaultFocusTarget", "NestedMenuContainers") instance=ExtResource("1_shoke")]
-DefaultFocusTarget = NodePath("MenuContainer1")
+[node name="MenuContainer" unique_id=1238761966 node_paths=PackedStringArray("ThisSelectionBox", "NestedMenuContainers") instance=ExtResource("1_shoke")]
+ThisSelectionBox = NodePath("HBoxContainer/SelectionBox1")
 NestedMenuContainers = {
-1: NodePath("MenuContainer1"),
+1: NodePath("HBoxContainer/MenuContainer1"),
 2: NodePath("MenuContainer2"),
-4: NodePath("MenuContainer3")
+3: NodePath("MenuContainer3")
 }
 
-[node name="MenuContainer1" parent="." index="0" unique_id=402545586 node_paths=PackedStringArray("ThisSelectionBox") instance=ExtResource("1_shoke")]
+[node name="HBoxContainer" type="HBoxContainer" parent="." index="0" unique_id=2113073873]
 layout_mode = 1
-ThisSelectionBox = NodePath("SelectionBox")
-
-[node name="SelectionBox" parent="MenuContainer1" index="0" unique_id=671780267 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_m2027")]
-layout_mode = 1
-OptionsContainer = NodePath("GridContainer")
-
-[node name="OptionsContainer2" type="VBoxContainer" parent="MenuContainer1/SelectionBox" index="1" unique_id=1602513921]
-visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -155.5
-offset_top = -163.5
-offset_right = 155.5
-offset_bottom = 163.5
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="MenuContainer1/SelectionBox/OptionsContainer2" index="0" unique_id=235854530]
+[node name="SelectionBox1" parent="HBoxContainer" index="0" unique_id=671780267 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_m2027")]
+layout_mode = 2
+OptionsContainer = NodePath("../MarginContainer/VBoxContainer")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer" index="1" unique_id=2032316648]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/MarginContainer" index="0" unique_id=2139930087]
+custom_minimum_size = Vector2(128, 0)
+layout_mode = 2
+
+[node name="DynamicTextContainer" parent="HBoxContainer/MarginContainer/VBoxContainer" index="0" unique_id=2005722307 instance=ExtResource("4_esuxv")]
 layout_mode = 2
 size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 1"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="Label2" type="Label" parent="MenuContainer1/SelectionBox/OptionsContainer2" index="1" unique_id=2039938968]
+[node name="DynamicTextContainer2" parent="HBoxContainer/MarginContainer/VBoxContainer" index="1" unique_id=1108876756 instance=ExtResource("4_esuxv")]
 layout_mode = 2
 size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 2"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="Label3" type="Label" parent="MenuContainer1/SelectionBox/OptionsContainer2" index="2" unique_id=1618652111]
+[node name="DynamicTextContainer3" parent="HBoxContainer/MarginContainer/VBoxContainer" index="2" unique_id=429242311 instance=ExtResource("4_esuxv")]
 layout_mode = 2
 size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 3"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="Label4" type="Label" parent="MenuContainer1/SelectionBox/OptionsContainer2" index="3" unique_id=1959014360]
+[node name="MenuContainer1" parent="HBoxContainer" index="2" unique_id=402545586 node_paths=PackedStringArray("ThisSelectionBox") instance=ExtResource("1_shoke")]
 layout_mode = 2
-size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 4"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
+ThisSelectionBox = NodePath("SelectionBox")
 
-[node name="GridContainer" type="GridContainer" parent="MenuContainer1/SelectionBox" index="2" unique_id=439179869]
+[node name="SelectionBox" parent="HBoxContainer/MenuContainer1" index="0" unique_id=1798524532 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_m2027")]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -118.0
-offset_top = -62.0
-offset_right = 122.0
-offset_bottom = 69.0
+OptionsContainer = NodePath("../GridContainer")
+
+[node name="GridContainer" type="GridContainer" parent="HBoxContainer/MenuContainer1" index="1" unique_id=439179869]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 columns = 2
 
-[node name="DynamicTextContainer" parent="MenuContainer1/SelectionBox/GridContainer" index="0" unique_id=2005722307 instance=ExtResource("4_esuxv")]
+[node name="DynamicTextContainer" parent="HBoxContainer/MenuContainer1/GridContainer" index="0" unique_id=1646569740 instance=ExtResource("4_esuxv")]
 layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 6
 _content = "Option 1"
 
-[node name="DynamicTextContainer2" parent="MenuContainer1/SelectionBox/GridContainer" index="1" unique_id=831704952 instance=ExtResource("4_esuxv")]
+[node name="DynamicTextContainer2" parent="HBoxContainer/MenuContainer1/GridContainer" index="1" unique_id=831704952 instance=ExtResource("4_esuxv")]
 layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 6
 _content = "Option 2"
 
-[node name="DynamicTextContainer3" parent="MenuContainer1/SelectionBox/GridContainer" index="2" unique_id=943647525 instance=ExtResource("4_esuxv")]
+[node name="DynamicTextContainer3" parent="HBoxContainer/MenuContainer1/GridContainer" index="2" unique_id=943647525 instance=ExtResource("4_esuxv")]
 layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 6
 _content = "Option 3"
 
-[node name="DynamicTextContainer4" parent="MenuContainer1/SelectionBox/GridContainer" index="3" unique_id=1753435128 instance=ExtResource("4_esuxv")]
+[node name="DynamicTextContainer4" parent="HBoxContainer/MenuContainer1/GridContainer" index="3" unique_id=1753435128 instance=ExtResource("4_esuxv")]
 layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 6
 _content = "Option 4"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MenuContainer1/SelectionBox" index="3" unique_id=1186955115]
-visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -291.0
-offset_top = -20.0
-offset_right = 292.0
-offset_bottom = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Label" type="Label" parent="MenuContainer1/SelectionBox/HBoxContainer" index="0" unique_id=299238732]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 1"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Label2" type="Label" parent="MenuContainer1/SelectionBox/HBoxContainer" index="1" unique_id=1831347390]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 2"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Label3" type="Label" parent="MenuContainer1/SelectionBox/HBoxContainer" index="2" unique_id=390326441]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 3"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Label4" type="Label" parent="MenuContainer1/SelectionBox/HBoxContainer" index="3" unique_id=508281047]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
-mouse_filter = 0
-text = "Option 4"
-label_settings = ExtResource("3_f5tkt")
-horizontal_alignment = 1
-vertical_alignment = 1
 
 [node name="MenuContainer2" parent="." index="1" unique_id=1772996445 instance=ExtResource("1_shoke")]
 layout_mode = 1

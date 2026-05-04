@@ -12,11 +12,12 @@ public partial class UIManager : Control
 {
 
     private Dictionary<MenuID, MenuContainer> ManagedMenus = [];
-    private MenuContainer CurrentMenu;
+    private MenuContainer CurrentRootMenu;
+    private MenuContainer CurrentFocusedMenu;
     private UISignalProcessor SignalProcessor = new();
 
     //We will figure this out later after we can actually process events succesfully
-    private List<MenuContainer> FocusStack = [];
+    private Stack<MenuContainer> FocusStack = [];
 
     private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
 
@@ -27,14 +28,17 @@ public partial class UIManager : Control
         ProcessCommand(OpenMenuEvent);
         //OpenMenu(MenuID.TestMenu);
     }
-    public void HideMenu(MenuID menuToHide)
+
+    private void HideTopMenu(MenuID menuToHide)
     {
         if (ManagedMenus.TryGetValue(menuToHide, out MenuContainer targetMenu))
         {
             targetMenu.Hide();
-            if (targetMenu == CurrentMenu)
+            if (targetMenu == CurrentRootMenu)
             {
-                CurrentMenu = null;
+                FocusStack.Clear();
+                CurrentRootMenu = null;
+                CurrentFocusedMenu = null;
             }
         }
         else
@@ -43,7 +47,7 @@ public partial class UIManager : Control
         }
     }
 
-    public void ShowMenu(MenuID menuToShow)
+    private void ShowTopMenu(MenuID menuToShow)
     {
         if (ManagedMenus.TryGetValue(menuToShow, out MenuContainer targetMenu))
         {
@@ -55,7 +59,28 @@ public partial class UIManager : Control
         }
     }
 
-    public void InstantiateMenu(MenuID menuToInstantiate)
+    private void ChangeTopFocus(MenuID menuToFocus)
+    {
+        if (ManagedMenus.TryGetValue(menuToFocus, out MenuContainer targetMenu))
+        {
+            if (targetMenu.Visible)
+            {
+                FocusStack.Clear();
+                CurrentRootMenu = targetMenu;
+                CurrentFocusedMenu = targetMenu;
+                CurrentFocusedMenu.DefaultFocus();
+            }
+            else
+            {
+                GD.PrintErr("UIManager tried to focus a menu that is invisible. Maybe try 'Show()'ing it first?");
+            }
+        }
+        else
+        {
+            GD.PrintErr("UIManager tried to focus a menu that doesn't exist!");
+        }
+    }
+    private void InstantiateMenu(MenuID menuToInstantiate)
     {
         if (ManagedMenus.ContainsKey(menuToInstantiate))
         {
@@ -82,39 +107,37 @@ public partial class UIManager : Control
                 GD.PushError("Unable to convert Node to MenuContainer");
             }
     }
-    public void OpenMenu(MenuID menuToOpen)
+    private void OpenMenu(MenuID menuToOpen)
     {
-        if (CurrentMenu != null)
+        FocusStack.Clear();
+        if (CurrentRootMenu != null)
         {
-            CurrentMenu.Hide();
+            CurrentRootMenu.Hide();
         }
 
         if (ManagedMenus.TryGetValue(menuToOpen, out MenuContainer targetMenu))
         {
-            CurrentMenu = targetMenu;
-            CurrentMenu.Show();
-            CurrentMenu.DefaultFocus();
-            return;
+            CurrentRootMenu = targetMenu;
+            CurrentFocusedMenu = targetMenu;
+            CurrentRootMenu.Show();
+            CurrentFocusedMenu.DefaultFocus();
         }
         else 
         {
-            PackedScene menu_to_instantiate = MenuLibrary.GetMenu(menuToOpen);
-            if (menu_to_instantiate == null)
-            {
-                throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it!");
-            }
-
+            PackedScene menu_to_instantiate = MenuLibrary.GetMenu(menuToOpen) 
+                ?? throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it!");
             Node temp = menu_to_instantiate.Instantiate();
             if (temp is MenuContainer new_menu)
             {
                 ManagedMenus.Add(menuToOpen, new_menu);
                 AddChild(new_menu);
-                CurrentMenu = new_menu;
-                CurrentMenu.Show();
-                CurrentMenu.FocusReceived += ProcessCommand;
-                CurrentMenu.ConfirmReceived += ProcessCommand;
-                CurrentMenu.CancelReceived += ProcessCommand;
-                CurrentMenu.DefaultFocus();
+                CurrentRootMenu = new_menu;
+                CurrentFocusedMenu = targetMenu;
+                CurrentRootMenu.Show();
+                CurrentRootMenu.FocusReceived += ProcessCommand;
+                CurrentRootMenu.ConfirmReceived += ProcessCommand;
+                CurrentRootMenu.CancelReceived += ProcessCommand;
+                CurrentFocusedMenu.DefaultFocus();
             }
             else
             {
@@ -123,14 +146,16 @@ public partial class UIManager : Control
         } 
     }
 
-    public void DestroyMenu(MenuID menuToDestroy)
+    private void DestroyMenu(MenuID menuToDestroy)
     {
         if (ManagedMenus.TryGetValue(menuToDestroy, out MenuContainer the_condemned))
         {
             ManagedMenus.Remove(menuToDestroy);
-            if (the_condemned == CurrentMenu)
+            if (the_condemned == CurrentRootMenu)
             {
-                CurrentMenu = null;
+                CurrentRootMenu = null;
+                CurrentFocusedMenu = null;
+                FocusStack.Clear();
             }
             Unsubscribe(the_condemned);
             the_condemned.QueueFree();
@@ -141,27 +166,47 @@ public partial class UIManager : Control
         }
     }
 
-    public void MoveFocusTo(MenuID menuToFocus)
+    ////////////////////////
+    
+    private void MoveFocusTo(MenuContainer menuToFocus)
     {
-        if (ManagedMenus.TryGetValue(menuToFocus, out MenuContainer targetMenu))
+        FocusStack.Push(CurrentFocusedMenu);
+        CurrentFocusedMenu = menuToFocus;
+        CurrentFocusedMenu.DefaultFocus();
+    }
+
+    private void HideMenu(MenuContainer menuToHide)
+    {
+        if (menuToHide != CurrentFocusedMenu)
         {
-            if (targetMenu.Visible)
-            {
-                CurrentMenu = targetMenu;
-                CurrentMenu.DefaultFocus();
-            }
-            else
-            {
-                GD.PrintErr("UIManager tried to focus a menu that is invisible. Maybe try 'Show()'ing it first?");
-            }
+            menuToHide.Hide();
         }
         else
         {
-            GD.PrintErr("UIManager tried to focus a menu that doesn't exist!");
+            GD.PrintErr("The currently focused menu just tried to hide itself! If this is intentional, them make it allowed in the code.");
         }
     }
 
-    private void ProcessCommand(Command commandToProcess)
+    private void ShowMenu(MenuContainer menuToHide)
+    {
+        menuToHide.Show();
+    }
+
+    private void PopFocus()
+    {
+        if (FocusStack.Count > 0)
+        {
+            CurrentFocusedMenu = FocusStack.Pop();
+            CurrentFocusedMenu.DefaultFocus();
+        }
+        else
+        {
+            CurrentRootMenu.Hide();
+            CurrentRootMenu = null;
+            CurrentFocusedMenu = null;
+        }
+    }
+    public void ProcessCommand(Command commandToProcess)
     {
         GD.Print("UIManager has received a UIEvent");
         if (commandToProcess?.Domain == CommandDomain.UI)
@@ -190,9 +235,40 @@ public partial class UIManager : Control
     }
 
     private void SetupHandlerMap()
-    {
+    {   
+        CommandToHandlerMap.Add(typeof(CommandFocusMenu), HandleCommandFocusMenu);
+        CommandToHandlerMap.Add(typeof(CommandHideMenu), HandleCommandHideMenu);
         CommandToHandlerMap.Add(typeof(CommandOpenMenu), HandleCommandOpenMenu);
+        CommandToHandlerMap.Add(typeof(CommandPopFocus), HandleCommandPopFocus);
+        CommandToHandlerMap.Add(typeof(CommandShowMenu), HandleCommandShowMenu);
     }
+
+    private void HandleCommandFocusMenu(Command currentCommand)
+    {
+        CommandFocusMenu temp = (CommandFocusMenu)currentCommand;
+        MenuContainer focus_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        MoveFocusTo(focus_target);
+    }
+
+    private void HandleCommandHideMenu(Command currentCommand)
+    {
+        CommandHideMenu temp = (CommandHideMenu)currentCommand;
+        MenuContainer hide_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        HideMenu(hide_target);
+    }
+
+    private void HandleCommandPopFocus(Command currentCommand)
+    {
+        PopFocus();
+    }
+
+    private void HandleCommandShowMenu(Command currentCommand)
+    {
+        CommandShowMenu temp = (CommandShowMenu)currentCommand;
+        MenuContainer show_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        ShowMenu(show_target);
+    }
+
     private void HandleCommandOpenMenu(Command currentCommand)
     {
         CommandOpenMenu temp = (CommandOpenMenu)currentCommand;

@@ -1,0 +1,6 @@
+[gd_resource type="Resource" format=3 uid="uid://d2ua33mb00j3t"]
+
+[ext_resource type="Script" uid="uid://duxvy6oslqrvm" path="res://Commands/UI-Commands/UI-Command-Scripts/CommandPopFocus.cs" id="1_tqekt"]
+
+[resource]
+script = ExtResource("1_tqekt")

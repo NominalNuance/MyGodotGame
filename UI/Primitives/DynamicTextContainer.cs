@@ -3,7 +3,7 @@ using Godot;
 using System;
 
 namespace EroJRPG.UI.Primitives;
-public partial class DynamicTextContainer : Control
+public partial class DynamicTextContainer : HBoxContainer
 {
 
     public event Action<DynamicTextContainer> OptionMoused;
