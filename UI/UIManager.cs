@@ -13,14 +13,16 @@ public partial class UIManager : Control
 
     private Dictionary<MenuID, MenuContainer> ManagedMenus = [];
     private MenuContainer CurrentMenu;
-    private UISignalProcessor SignalProcessor;
+    private UISignalProcessor SignalProcessor = new();
 
     //We will figure this out later after we can actually process events succesfully
     private List<MenuContainer> FocusStack = [];
 
-    //The _Ready() is here for testing purposes. The final form should not have this defined
+    private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
+
     public override void _Ready()
 	{
+        SetupHandlerMap();
         CommandOpenMenu OpenMenuEvent = new(MenuID.TestMenu);
         ProcessCommand(OpenMenuEvent);
         //OpenMenu(MenuID.TestMenu);
@@ -164,16 +166,20 @@ public partial class UIManager : Control
         GD.Print("UIManager has received a UIEvent");
         if (commandToProcess?.Domain == CommandDomain.UI)
         {
-            switch (commandToProcess.Action)
+            if (CommandToHandlerMap.TryGetValue(commandToProcess.GetType(), out var handler))
             {
-                case "Open":
-                    OpenMenu(commandToProcess.Target);
-                    break;
+                handler(commandToProcess);
+            }
+            else
+            {
+                GD.PushError("UIManager received a UI command that has no handler associated with it!");
             }
         }
+        else
+        {
+            SignalProcessor.ProcessCommand(commandToProcess);
+        }
 
-
-        //This can be made when the UIEvent class is actually filled out and we have a proper shape for the event structure.
     }
 
     private void Unsubscribe(MenuContainer menuToUnsubscribeFrom)
@@ -182,4 +188,15 @@ public partial class UIManager : Control
         menuToUnsubscribeFrom.ConfirmReceived -= ProcessCommand;
         menuToUnsubscribeFrom.CancelReceived -= ProcessCommand;
     }
+
+    private void SetupHandlerMap()
+    {
+        CommandToHandlerMap.Add(typeof(CommandOpenMenu), HandleCommandOpenMenu);
+    }
+    private void HandleCommandOpenMenu(Command currentCommand)
+    {
+        CommandOpenMenu temp = (CommandOpenMenu)currentCommand;
+        OpenMenu(temp.Target);
+    }
+
 }

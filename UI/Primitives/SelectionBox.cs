@@ -1,3 +1,4 @@
+using EroJRPG.Commands;
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ public partial class SelectionBox : Control
 
 	[Export] public Control OptionsContainer;
 
-	[Export] public Command CancelData = new();
+	[Export] public Command CancelData;
 	
 	//There should be a public interface for this to allow for the addition of options and removal of options
 	private List<DynamicTextContainer> MenuOptions = [];

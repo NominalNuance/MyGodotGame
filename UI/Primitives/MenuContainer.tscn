@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bm2yei1r8jb0o" path="res://UI/Primitives/MenuContainer.cs" id="1_jox7a"]
 
-[node name="MenuContainer" type="Control" unique_id=1238761966]
+[node name="MenuContainer" type="Control" unique_id=1238761966 node_paths=PackedStringArray("ThisControlGroups")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,3 +11,4 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_jox7a")
+ThisControlGroups = {}

@@ -1,3 +1,4 @@
+using EroJRPG.Commands;
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,21 @@ namespace EroJRPG.UI.Primitives;
 //For the purpose of signal routing, prefer to add export fields to the MenuContainer to allow it to access the signals
 //All exports should be OPTIONAL for setting up the MenuContainer
 
-//What is the relationship between the MenuContainer and the UIManager?
+public enum ControlGroups
+{
+	Invalid,
+	NestedMenu0,
+    NestedMenu1,
+    NestedMenu2,
+    NestedMenu3,
+    NestedMenu4,
+	NestedMenu5,
+	NestedMenu6,
+	NestedMenu7,
+	NestedMenu8,
+	NestedMenu9
+}
+
 public partial class MenuContainer : Control
 {
 	public event Action<Command> FocusReceived;
@@ -24,7 +39,8 @@ public partial class MenuContainer : Control
 
 
 	//This should only hold Directly nested MenuContainers, if any. 
-	[Export] public Godot.Collections.Array<MenuContainer> NestedMenuContainers = [];
+
+	[Export] public Godot.Collections.Dictionary<ControlGroups, MenuContainer> NestedMenuContainers = [];
 
 	private HashSet<MenuContainer> PrivateMenuContainers =[];
 
@@ -41,7 +57,7 @@ public partial class MenuContainer : Control
 		PrivateMenuContainers.Clear();
 		if (NestedMenuContainers.Count > 0)
 		{
-			foreach (MenuContainer menu_container in NestedMenuContainers)
+            foreach (var (_, menu_container) in NestedMenuContainers)
 			{
 				ValidateNestedContainer(menu_container);
 				if(!PrivateMenuContainers.Add(menu_container))

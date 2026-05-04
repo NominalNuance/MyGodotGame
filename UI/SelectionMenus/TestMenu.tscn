@@ -7,7 +7,11 @@
 
 [node name="MenuContainer" unique_id=1238761966 node_paths=PackedStringArray("DefaultFocusTarget", "NestedMenuContainers") instance=ExtResource("1_shoke")]
 DefaultFocusTarget = NodePath("MenuContainer1")
-NestedMenuContainers = [NodePath("MenuContainer1"), NodePath("MenuContainer2"), NodePath("MenuContainer3")]
+NestedMenuContainers = {
+1: NodePath("MenuContainer1"),
+2: NodePath("MenuContainer2"),
+4: NodePath("MenuContainer3")
+}
 
 [node name="MenuContainer1" parent="." index="0" unique_id=402545586 node_paths=PackedStringArray("ThisSelectionBox") instance=ExtResource("1_shoke")]
 layout_mode = 1
