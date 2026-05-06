@@ -7,8 +7,8 @@ public partial class DynamicTextContainer : HBoxContainer
 {
 
     public event Action<DynamicTextContainer> OptionMoused;
-    public event Action<DynamicTextContainer, Command> OptionFocused;
-    public event Action<Command> OptionConfirmed;
+    public event Action<DynamicTextContainer, Resource> OptionFocused;
+    public event Action<Resource> OptionConfirmed;
     public event Action OptionCanceled;
 
     [Export] private string _content;
@@ -38,8 +38,8 @@ public partial class DynamicTextContainer : HBoxContainer
 
     //This is meant to hold the information for what happens when the option is "confirmed"
     //To be consumed by the UIManager
-    [Export] public Command ConfirmData;
-    [Export] public Command FocusData;
+    [Export] public Resource ConfirmData;
+    [Export] public Resource FocusData;
 
     private Label ThisLabel;
     private TextureRect ThisTextureRect;

@@ -3,4 +3,5 @@
 [ext_resource type="Script" uid="uid://duxvy6oslqrvm" path="res://Commands/UI-Commands/UI-Command-Scripts/CommandPopFocus.cs" id="1_tqekt"]
 
 [resource]
+resource_local_to_scene = true
 script = ExtResource("1_tqekt")

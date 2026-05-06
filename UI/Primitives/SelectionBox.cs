@@ -6,17 +6,15 @@ using System.Collections.Generic;
 namespace EroJRPG.UI.Primitives;
 
 //TODO: Have some way for specific SelectionBoxes to define what 'cancel' does and let the UIManager know.
-public partial class SelectionBox : Control
+public partial class SelectionBox : MarginContainer
 {
-	public event Action<Command> Focused;
-	public event Action<Command> Confirmed;
-	public event Action<Command> Canceled;
+	public event Action<Resource> InputReceived;
 
     private Cursor ThisCursor;
 
 	[Export] public Control OptionsContainer;
 
-	[Export] public Command CancelData;
+	[Export] public Resource CancelData;
 	
 	//There should be a public interface for this to allow for the addition of options and removal of options
 	private List<DynamicTextContainer> MenuOptions = [];
@@ -186,24 +184,24 @@ public partial class SelectionBox : Control
 		mousedObject.GrabFocus();
 		GD.Print("An option has been moused.");
 	}
-	private void OptionFocused(DynamicTextContainer focusedObject, Command focusEvent)
+	private void OptionFocused(DynamicTextContainer focusedObject, Resource focusEvent)
 	{
 		ThisCursor.MoveCursor(focusedObject);
 		GD.Print("An option has been focused.");
-		Focused?.Invoke(focusEvent);
+		InputReceived?.Invoke(focusEvent);
 	}
 
-	private void OptionConfirmReceived(Command confirmEvent)
+	private void OptionConfirmReceived(Resource confirmEvent)
 	{
 		GD.Print("An option has been confirmed.");
-		Confirmed?.Invoke(confirmEvent);
+		InputReceived?.Invoke(confirmEvent);
 			
 	}
 
 	private void OptionCancelReceived()
 	{
 		GD.Print("An option has been cancelled");
-		Canceled?.Invoke(CancelData);
+		InputReceived?.Invoke(CancelData);
 	}
 
 }

@@ -12,18 +12,18 @@ public partial class StatCounter : Label
 
     public override void _Ready()
     {
-        SM = GetNode<StateManager>("/root/StateManager");
+        //SM = GetNode<StateManager>("/root/StateManager");
         TargetState = (BundleName, StateName);
         
-        SM.Subscribe(TargetState.BundleName, TargetState.StateName, this, UpdateCounter);
+        //SM.Subscribe(TargetState.BundleName, TargetState.StateName, this, UpdateCounter);
         //Text = "Pingas";
     }
 
     public void ChangeSubscribedState (string newBundleName, string newStateName)
     {
-        SM.Unsubscribe(TargetState.BundleName, TargetState.StateName, this);
+        //SM.Unsubscribe(TargetState.BundleName, TargetState.StateName, this);
         TargetState = (newBundleName, newStateName);
-        SM.Subscribe(TargetState.BundleName, TargetState.StateName, this, UpdateCounter);
+        //SM.Subscribe(TargetState.BundleName, TargetState.StateName, this, UpdateCounter);
     }
     private void UpdateCounter(object newUpdate)
     {

@@ -10,8 +10,6 @@ public enum CommandDomain
     UI,
     Game
 }
-
-//The Data entries are just placeholders for now, to be rewritten with the actual fields when the full UI system is (mostly) finished.
 public abstract partial class Command : Resource
 {
     public abstract CommandDomain Domain { get;}

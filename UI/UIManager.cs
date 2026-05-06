@@ -98,9 +98,7 @@ public partial class UIManager : Control
             {
                 ManagedMenus.Add(menuToInstantiate, new_menu);
                 AddChild(new_menu);
-                new_menu.FocusReceived += ProcessCommand;
-                new_menu.ConfirmReceived += ProcessCommand;
-                new_menu.CancelReceived += ProcessCommand;
+                new_menu.InputReceived += ProcessCommand;
             }
             else
             {
@@ -132,11 +130,9 @@ public partial class UIManager : Control
                 ManagedMenus.Add(menuToOpen, new_menu);
                 AddChild(new_menu);
                 CurrentRootMenu = new_menu;
-                CurrentFocusedMenu = targetMenu;
+                CurrentFocusedMenu = new_menu;
                 CurrentRootMenu.Show();
-                CurrentRootMenu.FocusReceived += ProcessCommand;
-                CurrentRootMenu.ConfirmReceived += ProcessCommand;
-                CurrentRootMenu.CancelReceived += ProcessCommand;
+                CurrentRootMenu.InputReceived += ProcessCommand;
                 CurrentFocusedMenu.DefaultFocus();
             }
             else
@@ -206,14 +202,29 @@ public partial class UIManager : Control
             CurrentFocusedMenu = null;
         }
     }
-    public void ProcessCommand(Command commandToProcess)
+
+    //Consider spinning this off into a separate script as a static function that takes in a Command Resource and the 
+    //Map of Commands to Handlers as arguments and then returns the appropriate handler.
+    //That way all of the manager scripts can utilize that.
+    public void ProcessCommand(Resource commandToProcess)
     {
+        if (commandToProcess == null)
+        {
+            //Maybe we would want to warn that no command resource was assigned for a signal later on
+            //while testing such a warning would fire off constantly since we are testing incomplete menus
+            //which would flood the log with a bunch of noise. Something to keep in mind.
+            //regardless, if we don't actually receive any command data then we don't want to do anything.
+            return;
+        }
+
+        if (commandToProcess is Command processing_command)
+        {
         GD.Print("UIManager has received a UIEvent");
-        if (commandToProcess?.Domain == CommandDomain.UI)
+        if (processing_command?.Domain == CommandDomain.UI)
         {
             if (CommandToHandlerMap.TryGetValue(commandToProcess.GetType(), out var handler))
             {
-                handler(commandToProcess);
+                handler(processing_command);
             }
             else
             {
@@ -222,16 +233,18 @@ public partial class UIManager : Control
         }
         else
         {
-            SignalProcessor.ProcessCommand(commandToProcess);
+            SignalProcessor.ProcessCommand(processing_command);
         }
-
+        }
+        else
+        {
+            GD.PushError("UI received a resource that wasn't a Command!");
+        }
     }
 
     private void Unsubscribe(MenuContainer menuToUnsubscribeFrom)
 	{
-        menuToUnsubscribeFrom.FocusReceived -= ProcessCommand;
-        menuToUnsubscribeFrom.ConfirmReceived -= ProcessCommand;
-        menuToUnsubscribeFrom.CancelReceived -= ProcessCommand;
+        menuToUnsubscribeFrom.InputReceived -= ProcessCommand;
     }
 
     private void SetupHandlerMap()

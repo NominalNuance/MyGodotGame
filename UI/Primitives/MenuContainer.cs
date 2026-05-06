@@ -24,11 +24,9 @@ public enum ControlGroups
 	NestedMenu9
 }
 
-public partial class MenuContainer : Control
+public partial class MenuContainer : MarginContainer
 {
-	public event Action<Command> FocusReceived;
-	public event Action<Command> ConfirmReceived;
-	public event Action<Command> CancelReceived;
+	public event Action<Resource> InputReceived;
 
 
 	//MenuContainers can contain at most one SelectionBox. MenuContainers can also contain other MenuContainers at the same time
@@ -49,9 +47,7 @@ public partial class MenuContainer : Control
 	{
 		if (ThisSelectionBox != null)
 		{
-			ThisSelectionBox.Focused += OptionFocused;
-			ThisSelectionBox.Confirmed += OptionConfirmReceived;
-			ThisSelectionBox.Canceled += OptionCancelReceived;
+			ThisSelectionBox.InputReceived += OptionInputReceived;
 		}
 
 		PrivateMenuContainers.Clear();
@@ -67,9 +63,7 @@ public partial class MenuContainer : Control
 			}
 			foreach (MenuContainer unique_menu_container in PrivateMenuContainers)
 			{
-				unique_menu_container.FocusReceived += OptionFocused;
-				unique_menu_container.ConfirmReceived += OptionConfirmReceived;
-				unique_menu_container.CancelReceived += OptionCancelReceived;
+				unique_menu_container.InputReceived += OptionInputReceived;
 			}
 		}
 		if (ThisSelectionBox != null && DefaultFocusTarget == null)
@@ -93,18 +87,14 @@ public partial class MenuContainer : Control
 	{
 		if (ThisSelectionBox != null)
 		{
-			ThisSelectionBox.Focused -= OptionFocused;
-			ThisSelectionBox.Confirmed -= OptionConfirmReceived;
-			ThisSelectionBox.Canceled -= OptionCancelReceived;
+			ThisSelectionBox.InputReceived -= OptionInputReceived;
 		}
 
 		if (PrivateMenuContainers.Count > 0)
 		{
 			foreach (MenuContainer menu_container in PrivateMenuContainers)
 			{
-				menu_container.FocusReceived -= OptionFocused;
-				menu_container.ConfirmReceived -= OptionConfirmReceived;
-				menu_container.CancelReceived -= OptionCancelReceived;
+				menu_container.InputReceived -= OptionInputReceived;
 			}
 		}
 	}
@@ -134,23 +124,10 @@ public partial class MenuContainer : Control
 	{
 		return NestedMenuContainers[menuToGet];
 	}
-	private void OptionFocused(Command focusEvent)
+	private void OptionInputReceived(Resource inputCommand)
 	{
-		GD.Print("A menu container received a focus event.");
-		FocusReceived?.Invoke(focusEvent);
-	}
-
-	private void OptionConfirmReceived(Command confirmEvent)
-	{
-		GD.Print("A menu container received a confirm event.");
-		ConfirmReceived?.Invoke(confirmEvent);
-			
-	}
-
-	private void OptionCancelReceived(Command cancelEvent)
-	{
-		GD.Print("A menu container received a cancel event.");
-		CancelReceived?.Invoke(cancelEvent);
+		GD.Print("A menu container received an input event.");
+		InputReceived?.Invoke(inputCommand);
 	}
 
 }

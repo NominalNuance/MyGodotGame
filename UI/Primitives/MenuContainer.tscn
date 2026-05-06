@@ -2,8 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bm2yei1r8jb0o" path="res://UI/Primitives/MenuContainer.cs" id="1_jox7a"]
 
-[node name="MenuContainer" type="Control" unique_id=1238761966]
-layout_mode = 3
+[node name="MenuContainer" type="MarginContainer" unique_id=1140841782]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
