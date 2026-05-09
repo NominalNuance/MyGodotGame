@@ -17,7 +17,11 @@ public partial class SelectionBox : MarginContainer
 	[Export] public Resource CancelData;
 	
 	//There should be a public interface for this to allow for the addition of options and removal of options
+	//That would be for dynamic and not static menus. It may be the case that we might need a different
+	//Kind of selection box for dynamic menus.
 	private List<DynamicTextContainer> MenuOptions = [];
+
+	private DynamicTextContainer LastFocusedOption = null;
 	public override void _Ready()
 	{
 
@@ -33,8 +37,8 @@ public partial class SelectionBox : MarginContainer
 
 		if (MenuOptions.Count > 0)
 		{
-			//This line is for testing. The UIManager should eventually be the one to decide which UI elements gain or lose focus.
-			//CallDeferred(nameof(SelectFirstOption));
+			GD.Print("moving cursor to the first option");
+			ThisCursor.MoveCursor(MenuOptions[0]);
 		}
 		else
 		{
@@ -172,13 +176,25 @@ public partial class SelectionBox : MarginContainer
 
 	}
 
-    public void SelectFirstOption()
+    public void GetFocus()
     {
         if (MenuOptions.Count > 0)
 		{
-			MenuOptions[0].GrabFocus();
+			if (LastFocusedOption != null)
+			{
+				LastFocusedOption.GrabFocus();
+			}
+			else
+			{
+				MenuOptions[0].GrabFocus();
+			}	
 		}
     }
+
+	public void ClearLastFocusedOption()
+	{
+		LastFocusedOption = null;
+	}
 	private void OptionMoused(DynamicTextContainer mousedObject)
 	{
 		mousedObject.GrabFocus();
@@ -187,6 +203,8 @@ public partial class SelectionBox : MarginContainer
 	private void OptionFocused(DynamicTextContainer focusedObject, Resource focusEvent)
 	{
 		ThisCursor.MoveCursor(focusedObject);
+		ThisCursor.Show();
+		LastFocusedOption = focusedObject;
 		GD.Print("An option has been focused.");
 		InputReceived?.Invoke(focusEvent);
 	}

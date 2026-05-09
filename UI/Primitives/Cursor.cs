@@ -10,6 +10,5 @@ public partial class Cursor : TextureRect
 		new_cursor_position.X -= Size.X + 5;
         new_cursor_position.Y -= (Size.Y / 2) - (someNode.Size.Y / 2.0f);
 		GlobalPosition = new_cursor_position;
-		Visible = true;
 	}
 }

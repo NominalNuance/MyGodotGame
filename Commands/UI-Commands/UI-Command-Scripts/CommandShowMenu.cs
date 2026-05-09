@@ -4,7 +4,7 @@ using Godot;
 namespace EroJRPG.Commands.UI;
 public partial class CommandShowMenu(ControlGroups newTarget) : Command
 {
-    public override CommandDomain Domain { get;} = CommandDomain.UI;
+    public override CommandDomain Domain { get;} = CommandDomain.UINested;
     [Export] public ControlGroups Target = newTarget;
 
     public CommandShowMenu() : this(ControlGroups.Invalid){}

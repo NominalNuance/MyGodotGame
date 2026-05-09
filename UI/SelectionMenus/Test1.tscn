@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://1jdb8rn6hbbg"]
+
+[ext_resource type="PackedScene" uid="uid://cjbf4c6rfant1" path="res://UI/Primitives/MenuContainer.tscn" id="1_mkfd8"]
+[ext_resource type="PackedScene" uid="uid://c42mxm7fs2155" path="res://UI/Primitives/selection_box.tscn" id="2_qid4j"]
+[ext_resource type="PackedScene" uid="uid://ui0on4df3rl" path="res://UI/Primitives/Dynamic Text Container.tscn" id="3_gqv7f"]
+
+[node name="Control" type="Control" unique_id=1628326146]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuContainer" parent="." unique_id=1140841782 instance=ExtResource("1_mkfd8")]
+layout_mode = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MenuContainer" unique_id=728176280]
+layout_mode = 2
+
+[node name="SelectionBox" parent="MenuContainer/HBoxContainer" unique_id=1784689418 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_qid4j")]
+layout_mode = 2
+size_flags_horizontal = 3
+OptionsContainer = NodePath("HBoxContainer3")
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="MenuContainer/HBoxContainer/SelectionBox" unique_id=703015499]
+layout_mode = 2
+
+[node name="HBoxContainer" parent="MenuContainer/HBoxContainer/SelectionBox/HBoxContainer3" unique_id=1013979701 instance=ExtResource("3_gqv7f")]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+
+[node name="HBoxContainer2" parent="MenuContainer/HBoxContainer/SelectionBox/HBoxContainer3" unique_id=75498276 instance=ExtResource("3_gqv7f")]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=786055329]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1284994851]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer" unique_id=1421280110]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer" unique_id=1825143208]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/MarginContainer/HBoxContainer" unique_id=651757358]
+layout_mode = 2
+size_flags_horizontal = 6
+text = "test"
+
+[node name="Label2" type="Label" parent="MarginContainer/HBoxContainer/MarginContainer/HBoxContainer" unique_id=198987093]
+layout_mode = 2
+size_flags_horizontal = 6
+text = "test"

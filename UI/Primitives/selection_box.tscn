@@ -14,3 +14,5 @@ script = ExtResource("1_brao3")
 [node name="Cursor" parent="." unique_id=1148804156 instance=ExtResource("3_depfd")]
 visible = false
 layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0

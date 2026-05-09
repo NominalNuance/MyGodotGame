@@ -7,7 +7,8 @@ namespace EroJRPG.Commands;
 public enum CommandDomain
 {
     Invalid,
-    UI,
+    UIRoot,
+    UINested,
     Game
 }
 public abstract partial class Command : Resource

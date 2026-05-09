@@ -80,7 +80,7 @@ public partial class MenuContainer : MarginContainer
 		}
 		else if (suspect == this)
 		{
-			throw new Exception("A menu container was assigned itself as a nested container in the insepctor!");
+			throw new Exception("A menu container was assigned itself as a nested container in the inspector!");
 		}
 	}
 	private void Unsubscribe()
@@ -108,7 +108,7 @@ public partial class MenuContainer : MarginContainer
 	{
 		if (DefaultFocusTarget is SelectionBox selection_box_focus)
 		{
-			selection_box_focus.CallDeferred("SelectFirstOption");
+			selection_box_focus.CallDeferred("GetFocus");
 		}
 		else if (DefaultFocusTarget is MenuContainer menu_container_focus)
 		{
@@ -118,6 +118,20 @@ public partial class MenuContainer : MarginContainer
 		{
 			GD.PushWarning("A MenuContainer received focus when it has no focus target! Was this intentional?");
 		}
+	}
+
+	public void ClearRememberedFocusOptions()
+	{
+		ThisSelectionBox?.ClearLastFocusedOption();
+		
+		if (PrivateMenuContainers.Count > 0)
+		{
+			foreach (MenuContainer menu_container in PrivateMenuContainers)
+			{
+				menu_container.ClearRememberedFocusOptions();
+			}
+		}
+
 	}
 
 	public MenuContainer GetNestedMenu(ControlGroups menuToGet)
