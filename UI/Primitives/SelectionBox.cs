@@ -8,9 +8,9 @@ namespace EroJRPG.UI.Primitives;
 //TODO: Have some way for specific SelectionBoxes to define what 'cancel' does and let the UIManager know.
 public partial class SelectionBox : MarginContainer
 {
+	public event Action<Control> FocusReceived;
 	public event Action<Resource> InputReceived;
 
-    private Cursor ThisCursor;
 
 	[Export] public Control OptionsContainer;
 
@@ -21,11 +21,10 @@ public partial class SelectionBox : MarginContainer
 	//Kind of selection box for dynamic menus.
 	private List<DynamicTextContainer> MenuOptions = [];
 
-	private DynamicTextContainer LastFocusedOption = null;
+	private Control LastFocusedOption = null;
 	public override void _Ready()
 	{
 
-		ThisCursor = GetNode<Cursor>("Cursor");
 
 		if (OptionsContainer == null)
 		{
@@ -35,16 +34,11 @@ public partial class SelectionBox : MarginContainer
 
 		BuildOptions();
 
-		if (MenuOptions.Count > 0)
-		{
-			GD.Print("moving cursor to the first option");
-			ThisCursor.MoveCursor(MenuOptions[0]);
-		}
-		else
+		if (MenuOptions.Count == 0)
 		{
 			GD.PrintErr("A Selection box has no options! Are you testing some code?");
 		}
-		
+
 	}
 
 	public void BuildOptions()
@@ -61,11 +55,11 @@ public partial class SelectionBox : MarginContainer
 		{
 			if (child is DynamicTextContainer control)
 			{
-				control.FocusMode = FocusModeEnum.All;
+				control.FocusMode = FocusModeEnum.None;
 				control.OptionMoused += OptionMoused;
 				control.OptionFocused += OptionFocused;
 				control.OptionConfirmed += OptionConfirmReceived;
-				control.OptionCanceled += OptionCancelReceived;
+				control.OptionUnfocused += OptionUnfocused;
 
 				MenuOptions.Add(control);
 			}
@@ -84,7 +78,7 @@ public partial class SelectionBox : MarginContainer
 			control.OptionMoused -= OptionMoused;
 			control.OptionFocused -= OptionFocused;
 			control.OptionConfirmed -= OptionConfirmReceived;
-			control.OptionCanceled -= OptionCancelReceived;
+			control.OptionUnfocused -= OptionUnfocused;
 		}
 	}
 
@@ -180,6 +174,10 @@ public partial class SelectionBox : MarginContainer
     {
         if (MenuOptions.Count > 0)
 		{
+			foreach (DynamicTextContainer option in MenuOptions )
+			{
+				option.FocusMode = FocusModeEnum.All;
+			}
 			if (LastFocusedOption != null)
 			{
 				LastFocusedOption.GrabFocus();
@@ -187,26 +185,40 @@ public partial class SelectionBox : MarginContainer
 			else
 			{
 				MenuOptions[0].GrabFocus();
-			}	
+			}
+				
 		}
     }
 
+	public void BecomeInactive()
+	{
+		foreach (DynamicTextContainer option in MenuOptions )
+		{
+			option.FocusMode = FocusModeEnum.None;
+		}
+	}
+
+	public bool RequestCancel()
+	{
+		OptionCancelReceived();
+		return CancelData != null;
+	}
 	public void ClearLastFocusedOption()
 	{
 		LastFocusedOption = null;
 	}
-	private void OptionMoused(DynamicTextContainer mousedObject)
+	private void OptionMoused(Control mousedObject)
 	{
+		if (mousedObject.FocusMode == FocusModeEnum.None){return;}
 		mousedObject.GrabFocus();
 		GD.Print("An option has been moused.");
 	}
-	private void OptionFocused(DynamicTextContainer focusedObject, Resource focusEvent)
+	private void OptionFocused(Control focusedObject, Resource focusEvent)
 	{
-		ThisCursor.MoveCursor(focusedObject);
-		ThisCursor.Show();
 		LastFocusedOption = focusedObject;
 		GD.Print("An option has been focused.");
 		InputReceived?.Invoke(focusEvent);
+		FocusReceived?.Invoke(focusedObject);
 	}
 
 	private void OptionConfirmReceived(Resource confirmEvent)
@@ -214,6 +226,11 @@ public partial class SelectionBox : MarginContainer
 		GD.Print("An option has been confirmed.");
 		InputReceived?.Invoke(confirmEvent);
 			
+	}
+
+	private void OptionUnfocused(Resource unfocusEvent)
+	{
+		InputReceived?.Invoke(unfocusEvent);
 	}
 
 	private void OptionCancelReceived()

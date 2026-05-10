@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c42mxm7fs2155"]
 
 [ext_resource type="Script" uid="uid://bs1iou0sjy0im" path="res://UI/Primitives/SelectionBox.cs" id="1_brao3"]
-[ext_resource type="PackedScene" uid="uid://c1ftwjffhp41j" path="res://UI/Primitives/cursor.tscn" id="3_depfd"]
+[ext_resource type="Resource" uid="uid://d2ua33mb00j3t" path="res://Commands/UINested-Commands/UINested_PopFocus_Res.tres" id="2_brao3"]
 
 [node name="SelectionBox" type="MarginContainer" unique_id=1784689418]
 anchors_preset = 15
@@ -10,9 +10,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_brao3")
-
-[node name="Cursor" parent="." unique_id=1148804156 instance=ExtResource("3_depfd")]
-visible = false
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 0
+CancelData = ExtResource("2_brao3")

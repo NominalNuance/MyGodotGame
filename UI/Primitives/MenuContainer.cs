@@ -26,6 +26,7 @@ public enum ControlGroups
 
 public partial class MenuContainer : MarginContainer
 {
+	public event Action<Control> FocusReceived;
 	public event Action<Resource> InputReceived;
 
 
@@ -33,7 +34,7 @@ public partial class MenuContainer : MarginContainer
 	//If a MenuContainer needs more than one selection box for some reason, then use a nested MenuContainer.
 	[Export] public SelectionBox ThisSelectionBox;
 
-	[Export] public Control DefaultFocusTarget = null;
+	[Export] public Control FocusTarget = null;
 
 
 	//This should only hold Directly nested MenuContainers, if any. 
@@ -48,6 +49,7 @@ public partial class MenuContainer : MarginContainer
 		if (ThisSelectionBox != null)
 		{
 			ThisSelectionBox.InputReceived += OptionInputReceived;
+			ThisSelectionBox.FocusReceived += OptionFocusReceived;
 		}
 
 		PrivateMenuContainers.Clear();
@@ -64,11 +66,12 @@ public partial class MenuContainer : MarginContainer
 			foreach (MenuContainer unique_menu_container in PrivateMenuContainers)
 			{
 				unique_menu_container.InputReceived += OptionInputReceived;
+				unique_menu_container.FocusReceived += OptionFocusReceived;
 			}
 		}
-		if (ThisSelectionBox != null && DefaultFocusTarget == null)
+		if (ThisSelectionBox != null && FocusTarget == null)
 		{
-			DefaultFocusTarget = ThisSelectionBox;
+			FocusTarget = ThisSelectionBox;
 		}
 	}
 
@@ -88,6 +91,7 @@ public partial class MenuContainer : MarginContainer
 		if (ThisSelectionBox != null)
 		{
 			ThisSelectionBox.InputReceived -= OptionInputReceived;
+			ThisSelectionBox.FocusReceived -= OptionFocusReceived;
 		}
 
 		if (PrivateMenuContainers.Count > 0)
@@ -95,6 +99,7 @@ public partial class MenuContainer : MarginContainer
 			foreach (MenuContainer menu_container in PrivateMenuContainers)
 			{
 				menu_container.InputReceived -= OptionInputReceived;
+				menu_container.FocusReceived -= OptionFocusReceived;
 			}
 		}
 	}
@@ -104,15 +109,15 @@ public partial class MenuContainer : MarginContainer
 		Unsubscribe();
 	}
 
-	public void DefaultFocus()
+	public void ReceiveFocus()
 	{
-		if (DefaultFocusTarget is SelectionBox selection_box_focus)
+		if (FocusTarget is SelectionBox selection_box_focus)
 		{
 			selection_box_focus.CallDeferred("GetFocus");
 		}
-		else if (DefaultFocusTarget is MenuContainer menu_container_focus)
+		else if (FocusTarget is MenuContainer menu_container_focus)
 		{
-			menu_container_focus.CallDeferred("DefaultFocus");
+			menu_container_focus.CallDeferred("ReceiveFocus");
 		}
 		else
 		{
@@ -131,17 +136,49 @@ public partial class MenuContainer : MarginContainer
 				menu_container.ClearRememberedFocusOptions();
 			}
 		}
+	}
 
+	public void DeactivateSelectionBox()
+	{
+		if (FocusTarget is SelectionBox selection_box_focus)
+		{
+			selection_box_focus.BecomeInactive();
+		}
+		else if (FocusTarget is MenuContainer menu_container_focus)
+		{
+			menu_container_focus.DeactivateSelectionBox();
+		}
+	}
+
+	public bool GlobalCancelReceived()
+	{
+		if (FocusTarget is SelectionBox selection_box_focus)
+		{
+			return selection_box_focus.RequestCancel();
+		}
+		else if (FocusTarget is MenuContainer menu_container_focus)
+		{
+			return menu_container_focus.GlobalCancelReceived();
+		}
+
+		return false;
 	}
 
 	public MenuContainer GetNestedMenu(ControlGroups menuToGet)
 	{
 		return NestedMenuContainers[menuToGet];
 	}
+
 	private void OptionInputReceived(Resource inputCommand)
 	{
 		GD.Print("A menu container received an input event.");
 		InputReceived?.Invoke(inputCommand);
+	}
+
+	private void OptionFocusReceived(Control focusedThing)
+	{
+		GD.Print("A menu container received a focus event.");
+		FocusReceived?.Invoke(focusedThing);
 	}
 
 }

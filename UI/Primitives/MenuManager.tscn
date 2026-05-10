@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://dbf7cpfohn80c"]
 
 [ext_resource type="Script" uid="uid://sl40ormj5xpv" path="res://UI/Primitives/MenuManager.cs" id="1_v6kfx"]
+[ext_resource type="PackedScene" uid="uid://chdka3aeexwo3" path="res://UI/Primitives/GhostCursor.tscn" id="2_0xt7d"]
+[ext_resource type="PackedScene" uid="uid://c1ftwjffhp41j" path="res://UI/Primitives/cursor.tscn" id="2_01pn0"]
 
 [node name="MenuManager" type="Control" unique_id=1863106164]
 layout_mode = 3
@@ -10,3 +12,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_v6kfx")
+PackedGhostCursor = ExtResource("2_0xt7d")
+
+[node name="Cursor" parent="." unique_id=1148804156 instance=ExtResource("2_01pn0")]
+visible = false
+layout_mode = 0
+anchors_preset = 0

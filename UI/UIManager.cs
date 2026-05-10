@@ -26,9 +26,24 @@ public partial class UIManager : Control
     public override void _Ready()
 	{
         SetupHandlerMap();
-        CommandOpenMenu OpenMenuEvent = new(MenuID.TestMenu);
+        Command_UIRoot_OpenMenu OpenMenuEvent = new(MenuID.TestMenu);
         ProcessCommand(OpenMenuEvent);
         //OpenMenu(MenuID.TestMenu);
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (@event.IsActionPressed("ui_cancel"))
+        {
+            if (CurrentRootMenu != null)
+            {
+                bool was_handled = CurrentRootMenu.GlobalCancelReceived();
+                if (was_handled)
+                {
+                    GetViewport().SetInputAsHandled();
+                }
+            }
+        }
     }
 
     private void HideUIElement(MenuID menuToHide)
@@ -220,13 +235,20 @@ public partial class UIManager : Control
 
     private void SetupHandlerMap()
     {   
-        CommandToHandlerMap.Add(typeof(CommandOpenMenu), HandleCommandOpenMenu);
+        CommandToHandlerMap.Add(typeof(Command_UIRoot_OpenMenu), HandleCommandOpenMenu);
+        CommandToHandlerMap.Add(typeof(Command_UIRoot_CloseCurrentMenu), HandleCommandCloseCurrentMenu);
     }
 
     private void HandleCommandOpenMenu(Command currentCommand)
     {
-        CommandOpenMenu temp = (CommandOpenMenu)currentCommand;
+        Command_UIRoot_OpenMenu temp = (Command_UIRoot_OpenMenu)currentCommand;
         OpenMenu(temp.Target);
     }
+
+    private void HandleCommandCloseCurrentMenu(Command currentCommand)
+    {
+        CloseCurrentMenu();
+    }
+
 
 }

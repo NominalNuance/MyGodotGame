@@ -4,25 +4,52 @@
 [ext_resource type="PackedScene" uid="uid://dbf7cpfohn80c" path="res://UI/Primitives/MenuManager.tscn" id="1_wpy1y"]
 [ext_resource type="PackedScene" uid="uid://c42mxm7fs2155" path="res://UI/Primitives/selection_box.tscn" id="2_m2027"]
 [ext_resource type="PackedScene" uid="uid://ui0on4df3rl" path="res://UI/Primitives/Dynamic Text Container.tscn" id="4_esuxv"]
-[ext_resource type="Script" uid="uid://ysu3e5qpqvoe" path="res://Commands/UI-Commands/UI-Command-Scripts/CommandFocusMenu.cs" id="4_td77y"]
-[ext_resource type="Script" uid="uid://cu208nj6748st" path="res://Commands/UI-Commands/UI-Command-Scripts/CommandShowMenu.cs" id="5_wpy1y"]
-[ext_resource type="Script" uid="uid://cm28qk3541k7c" path="res://Commands/UI-Commands/UI-Command-Scripts/CommandHideMenu.cs" id="6_hhwgl"]
-[ext_resource type="Resource" uid="uid://d2ua33mb00j3t" path="res://Commands/UI-Commands/PopFocusRes.tres" id="7_td77y"]
+[ext_resource type="Script" uid="uid://ysu3e5qpqvoe" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_FocusMenu.cs" id="4_td77y"]
+[ext_resource type="Script" uid="uid://cu208nj6748st" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_ShowMenu.cs" id="5_wpy1y"]
+[ext_resource type="Script" uid="uid://cm28qk3541k7c" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_HideMenu.cs" id="6_hhwgl"]
+[ext_resource type="Script" uid="uid://duxvy6oslqrvm" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_PopFocus.cs" id="8_wpy1y"]
 
-[sub_resource type="Resource" id="Resource_hhwgl"]
+[sub_resource type="Resource" id="Resource_wtaya"]
+resource_local_to_scene = true
+script = ExtResource("8_wpy1y")
+
+[sub_resource type="Resource" id="Resource_chsc5"]
 resource_local_to_scene = true
 script = ExtResource("4_td77y")
 Target = 1
 
-[sub_resource type="Resource" id="Resource_wtaya"]
+[sub_resource type="Resource" id="Resource_t04fd"]
 resource_local_to_scene = true
 script = ExtResource("5_wpy1y")
 Target = 1
 
-[sub_resource type="Resource" id="Resource_chsc5"]
+[sub_resource type="Resource" id="Resource_wpy1y"]
 resource_local_to_scene = true
 script = ExtResource("6_hhwgl")
 Target = 1
+
+[sub_resource type="Resource" id="Resource_hhwgl"]
+resource_local_to_scene = true
+script = ExtResource("4_td77y")
+Target = 2
+
+[sub_resource type="Resource" id="Resource_w1m3h"]
+resource_local_to_scene = true
+script = ExtResource("5_wpy1y")
+Target = 2
+
+[sub_resource type="Resource" id="Resource_oadtq"]
+resource_local_to_scene = true
+script = ExtResource("6_hhwgl")
+Target = 2
+
+[sub_resource type="Resource" id="Resource_4ik17"]
+resource_local_to_scene = true
+script = ExtResource("8_wpy1y")
+
+[sub_resource type="Resource" id="Resource_247fl"]
+resource_local_to_scene = true
+script = ExtResource("8_wpy1y")
 
 [node name="TestMenu" unique_id=1863106164 instance=ExtResource("1_wpy1y")]
 
@@ -31,7 +58,7 @@ layout_mode = 1
 ThisSelectionBox = NodePath("HBoxContainer/SelectionBox1")
 NestedMenuContainers = {
 1: NodePath("HBoxContainer/MenuContainer1"),
-2: NodePath("MenuContainer2"),
+2: NodePath("HBoxContainer/MenuContainer2"),
 3: NodePath("MenuContainer3")
 }
 
@@ -45,8 +72,9 @@ theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 OptionsContainer = NodePath("VBoxContainer")
+CancelData = SubResource("Resource_wtaya")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MenuContainer/HBoxContainer/SelectionBox1" index="1" unique_id=411961832]
+[node name="VBoxContainer" type="VBoxContainer" parent="MenuContainer/HBoxContainer/SelectionBox1" index="0" unique_id=411961832]
 custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
 
@@ -54,22 +82,25 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 6
-_content = "focus menu"
-ConfirmData = SubResource("Resource_hhwgl")
+_content = "Menu 1"
+ConfirmData = SubResource("Resource_chsc5")
+FocusData = SubResource("Resource_t04fd")
+UnfocusData = SubResource("Resource_wpy1y")
 
 [node name="DynamicTextContainer2" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="1" unique_id=2012368404 instance=ExtResource("4_esuxv")]
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 6
-_content = "show menu"
-ConfirmData = SubResource("Resource_wtaya")
+_content = "Menu 2"
+ConfirmData = SubResource("Resource_hhwgl")
+FocusData = SubResource("Resource_w1m3h")
+UnfocusData = SubResource("Resource_oadtq")
 
 [node name="DynamicTextContainer3" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="2" unique_id=667759859 instance=ExtResource("4_esuxv")]
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 6
-_content = "hide menu"
-ConfirmData = SubResource("Resource_chsc5")
+_content = "Menu null"
 
 [node name="MenuContainer1" parent="MenuContainer/HBoxContainer" index="1" unique_id=1926969970 node_paths=PackedStringArray("ThisSelectionBox") instance=ExtResource("1_shoke")]
 layout_mode = 2
@@ -78,9 +109,9 @@ ThisSelectionBox = NodePath("SelectionBox")
 [node name="SelectionBox" parent="MenuContainer/HBoxContainer/MenuContainer1" index="0" unique_id=286537677 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_m2027")]
 layout_mode = 2
 OptionsContainer = NodePath("GridContainer")
-CancelData = ExtResource("7_td77y")
+CancelData = SubResource("Resource_4ik17")
 
-[node name="GridContainer" type="GridContainer" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox" index="1" unique_id=588138273]
+[node name="GridContainer" type="GridContainer" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox" index="0" unique_id=588138273]
 layout_mode = 2
 columns = 2
 
@@ -108,8 +139,43 @@ size_flags_horizontal = 6
 size_flags_vertical = 6
 _content = "Option 4"
 
-[node name="MenuContainer2" parent="MenuContainer" index="1" unique_id=835091930 instance=ExtResource("1_shoke")]
+[node name="MenuContainer2" parent="MenuContainer/HBoxContainer" index="2" unique_id=835091930 instance=ExtResource("1_shoke")]
+visible = false
 layout_mode = 2
 
-[node name="MenuContainer3" parent="MenuContainer" index="2" unique_id=284338953 instance=ExtResource("1_shoke")]
+[node name="SelectionBox" parent="MenuContainer/HBoxContainer/MenuContainer2" index="0" unique_id=1054463487 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_m2027")]
 layout_mode = 2
+OptionsContainer = NodePath("VBoxContainer")
+CancelData = SubResource("Resource_247fl")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox" index="0" unique_id=1190537467]
+layout_mode = 2
+
+[node name="HBoxContainer" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="0" unique_id=1088749714 instance=ExtResource("4_esuxv")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 6
+_content = "Option 1"
+
+[node name="HBoxContainer2" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="1" unique_id=2003855291 instance=ExtResource("4_esuxv")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 6
+_content = "Option 2"
+
+[node name="HBoxContainer3" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="2" unique_id=608468383 instance=ExtResource("4_esuxv")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 6
+_content = "Option 3"
+
+[node name="MenuContainer3" parent="MenuContainer" index="1" unique_id=284338953 instance=ExtResource("1_shoke")]
+layout_mode = 2
+
+[node name="Cursor" parent="." index="1" unique_id=1148804156]
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 1
+grow_vertical = 1

@@ -11,6 +11,9 @@ public enum CommandDomain
     UINested,
     Game
 }
+
+//Child classes are to be named using Ypotryll_Case with the format being
+//"Command_[Domain name]_[Action Name]"
 public abstract partial class Command : Resource
 {
     public abstract CommandDomain Domain { get;}

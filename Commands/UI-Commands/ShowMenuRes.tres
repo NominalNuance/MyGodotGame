@@ -1,8 +1,0 @@
-[gd_resource type="Resource" format=3 uid="uid://c8ar2nmd5lt73"]
-
-[ext_resource type="Script" uid="uid://cu208nj6748st" path="res://Commands/UI-Commands/UI-Command-Scripts/CommandShowMenu.cs" id="1_4iwki"]
-
-[resource]
-resource_local_to_scene = true
-script = ExtResource("1_4iwki")
-Target = 1

@@ -6,10 +6,10 @@ namespace EroJRPG.UI.Primitives;
 public partial class DynamicTextContainer : HBoxContainer
 {
 
-    public event Action<DynamicTextContainer> OptionMoused;
-    public event Action<DynamicTextContainer, Resource> OptionFocused;
+    public event Action<Control> OptionMoused;
+    public event Action<Control, Resource> OptionFocused;
+    public event Action<Resource> OptionUnfocused;
     public event Action<Resource> OptionConfirmed;
-    public event Action OptionCanceled;
 
     [Export] private string _content;
     public string Content
@@ -40,6 +40,7 @@ public partial class DynamicTextContainer : HBoxContainer
     //To be consumed by the UIManager
     [Export] public Resource ConfirmData;
     [Export] public Resource FocusData;
+    [Export] public Resource UnfocusData;
 
     private Label ThisLabel;
     private TextureRect ThisTextureRect;
@@ -61,6 +62,7 @@ public partial class DynamicTextContainer : HBoxContainer
 
         MouseEntered += OptionWasMoused;
         FocusEntered += OptionFocusReceived;
+        FocusExited += FocusLost;
         GuiInput += OptionInputReceived;
 
         ThisStatCounter.ChangeSubscribedState(BundleName, StateName);
@@ -74,10 +76,6 @@ public partial class DynamicTextContainer : HBoxContainer
 		{
             OptionConfirmed?.Invoke(ConfirmData);
 		}
-		else if (newEvent.IsActionPressed("ui_cancel"))
-		{
-            OptionCanceled?.Invoke();
-		}
 	}
 
     private void OptionFocusReceived()
@@ -85,6 +83,10 @@ public partial class DynamicTextContainer : HBoxContainer
         OptionFocused?.Invoke(this, FocusData);
     }
 
+    private void FocusLost()
+    {
+        OptionUnfocused?.Invoke(UnfocusData);
+    }
     private void OptionWasMoused()
     {
         OptionMoused?.Invoke(this);

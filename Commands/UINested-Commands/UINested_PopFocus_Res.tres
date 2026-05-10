@@ -1,0 +1,7 @@
+[gd_resource type="Resource" format=3 uid="uid://d2ua33mb00j3t"]
+
+[ext_resource type="Script" uid="uid://duxvy6oslqrvm" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_PopFocus.cs" id="1_tqekt"]
+
+[resource]
+resource_local_to_scene = true
+script = ExtResource("1_tqekt")

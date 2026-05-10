@@ -13,14 +13,17 @@ public partial class MenuManager : Control
     public event Action<Resource> InputReceived;
     private MenuContainer CurrentFocusedMenu;
 
-    private Stack<MenuContainer> FocusStack = [];
+    private Stack<FocusCard> FocusStack = [];
 
     private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
 
     private MenuContainer ManagedMenuRootContainer = null;
+    private Cursor ThisCursor;
+    [Export] private PackedScene PackedGhostCursor;
 
     public override void _Ready()
 	{
+        ThisCursor = GetNode<Cursor>("Cursor");
         SetupHandlerMap();
         Godot.Collections.Array<Node> child_nodes = GetChildren();
         foreach (Node possible_container in child_nodes)
@@ -47,6 +50,7 @@ public partial class MenuManager : Control
         }
 
         ManagedMenuRootContainer.InputReceived += ProcessCommand;
+        ManagedMenuRootContainer.FocusReceived += ProcessFocus;
     }
     
     private void Unsubscribe()
@@ -54,6 +58,7 @@ public partial class MenuManager : Control
 		if (ManagedMenuRootContainer != null)
 		{
 			ManagedMenuRootContainer.InputReceived -= ProcessCommand;
+            ManagedMenuRootContainer.FocusReceived -= ProcessFocus;
 		}
 	}
 
@@ -65,25 +70,26 @@ public partial class MenuManager : Control
     public void GainFocus()
     {
         CurrentFocusedMenu = ManagedMenuRootContainer;
-        ManagedMenuRootContainer.DefaultFocus();
+        ManagedMenuRootContainer.ReceiveFocus();
     }
 
     public void LoseFocus()
     {
+        foreach (FocusCard card in FocusStack)
+        {
+            card.GhostCursor.QueueFree();
+        }
+        ThisCursor.Hide();
         FocusStack.Clear();
         ManagedMenuRootContainer.ClearRememberedFocusOptions();
+        CurrentFocusedMenu?.DeactivateSelectionBox();
         CurrentFocusedMenu = null;
     }
-    private void MoveFocusTo(MenuContainer menuToFocus)
-    {
-        if (CurrentFocusedMenu != null)
-        {
-            FocusStack.Push(CurrentFocusedMenu);
-        }
-        CurrentFocusedMenu = menuToFocus;
-        CurrentFocusedMenu.DefaultFocus();
-    }
 
+    public bool GlobalCancelReceived()
+    {
+        return CurrentFocusedMenu.GlobalCancelReceived();
+    }
     private void HideMenu(MenuContainer menuToHide)
     {
         if (menuToHide != CurrentFocusedMenu)
@@ -101,19 +107,49 @@ public partial class MenuManager : Control
         menuToHide.Show();
     }
 
-    private void PopFocus()
+    private void PushFocusTo(MenuContainer menuToFocus)
+    {
+        if (!menuToFocus.Visible)
+        {
+            GD.PushError("MenuManager tried to focus a hidden menu! Maybe try 'Show()'ing it first?");
+            return;
+        }
+
+        if (CurrentFocusedMenu != null)
+        {
+            Control new_ghost_cursor = PackedGhostCursor.Instantiate<Control>();
+            AddChild(new_ghost_cursor);
+            new_ghost_cursor.GlobalPosition = ThisCursor.GlobalPosition;
+            new_ghost_cursor.Show();
+            FocusStack.Push(new FocusCard(CurrentFocusedMenu, new_ghost_cursor));
+            CurrentFocusedMenu.DeactivateSelectionBox();
+        }
+        CurrentFocusedMenu = menuToFocus;
+        CurrentFocusedMenu.ReceiveFocus();
+    }
+
+    private void PopFocusFrom()
     {
         if (FocusStack.Count > 0)
         {
             CurrentFocusedMenu.ClearRememberedFocusOptions();
-            CurrentFocusedMenu = FocusStack.Pop();
-            CurrentFocusedMenu.DefaultFocus();
+            CurrentFocusedMenu.DeactivateSelectionBox();
+            FocusCard current_focus_card = FocusStack.Pop();
+            CurrentFocusedMenu = current_focus_card.LastFocus;
+            CurrentFocusedMenu.ReceiveFocus();
+            current_focus_card.GhostCursor.QueueFree();
         }
         else
         {
-            //TODO: create command to close the CurrentRootMenu and send to the UIManager
-            CurrentFocusedMenu = null;
+            Command_UIRoot_CloseCurrentMenu new_command = new();
+            InputReceived.Invoke(new_command);
         }
+    }
+
+    private void ProcessFocus(Control focusTarget)
+    {
+        ThisCursor.Show();
+        ThisCursor.MoveCursor(focusTarget);
     }
 
     //Consider spinning this off into a separate script as a static function that takes in a Command Resource and the 
@@ -162,36 +198,38 @@ public partial class MenuManager : Control
 
     private void SetupHandlerMap()
     {   
-        CommandToHandlerMap.Add(typeof(CommandFocusMenu), HandleCommandFocusMenu);
-        CommandToHandlerMap.Add(typeof(CommandHideMenu), HandleCommandHideMenu);
-        CommandToHandlerMap.Add(typeof(CommandPopFocus), HandleCommandPopFocus);
-        CommandToHandlerMap.Add(typeof(CommandShowMenu), HandleCommandShowMenu);
+        CommandToHandlerMap.Add(typeof(Command_UINested_FocusMenu), HandleCommandFocusMenu);
+        CommandToHandlerMap.Add(typeof(Command_UINested_HideMenu), HandleCommandHideMenu);
+        CommandToHandlerMap.Add(typeof(Command_UINested_PopFocus), HandleCommandPopFocus);
+        CommandToHandlerMap.Add(typeof(Command_UINested_ShowMenu), HandleCommandShowMenu);
     }
 
     private void HandleCommandFocusMenu(Command currentCommand)
     {
-        CommandFocusMenu temp = (CommandFocusMenu)currentCommand;
+        Command_UINested_FocusMenu temp = (Command_UINested_FocusMenu)currentCommand;
         MenuContainer focus_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
-        MoveFocusTo(focus_target);
+        PushFocusTo(focus_target);
     }
 
     private void HandleCommandHideMenu(Command currentCommand)
     {
-        CommandHideMenu temp = (CommandHideMenu)currentCommand;
+        Command_UINested_HideMenu temp = (Command_UINested_HideMenu)currentCommand;
         MenuContainer hide_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
         HideMenu(hide_target);
     }
 
     private void HandleCommandPopFocus(Command currentCommand)
     {
-        PopFocus();
+        PopFocusFrom();
     }
 
     private void HandleCommandShowMenu(Command currentCommand)
     {
-        CommandShowMenu temp = (CommandShowMenu)currentCommand;
+        Command_UINested_ShowMenu temp = (Command_UINested_ShowMenu)currentCommand;
         MenuContainer show_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
         ShowMenu(show_target);
     }
 
 }
+
+public record struct FocusCard(MenuContainer LastFocus, Control GhostCursor);
