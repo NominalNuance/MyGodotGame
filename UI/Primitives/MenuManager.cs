@@ -20,6 +20,7 @@ public partial class MenuManager : Control
     private MenuContainer ManagedMenuRootContainer = null;
     private Cursor ThisCursor;
     [Export] private PackedScene PackedGhostCursor;
+    private CommandDomain ThisDomain = CommandDomain.UINested;
 
     public override void _Ready()
 	{
@@ -49,7 +50,7 @@ public partial class MenuManager : Control
             return;
         }
 
-        ManagedMenuRootContainer.InputReceived += ProcessCommand;
+        ManagedMenuRootContainer.InputReceived += PreProcessCommand;
         ManagedMenuRootContainer.FocusReceived += ProcessFocus;
     }
     
@@ -57,7 +58,7 @@ public partial class MenuManager : Control
 	{
 		if (ManagedMenuRootContainer != null)
 		{
-			ManagedMenuRootContainer.InputReceived -= ProcessCommand;
+			ManagedMenuRootContainer.InputReceived -= PreProcessCommand;
             ManagedMenuRootContainer.FocusReceived -= ProcessFocus;
 		}
 	}
@@ -102,9 +103,9 @@ public partial class MenuManager : Control
         }
     }
 
-    private void ShowMenu(MenuContainer menuToHide)
+    private void ShowMenu(MenuContainer menuToShow)
     {
-        menuToHide.Show();
+        menuToShow.Show();
     }
 
     private void PushFocusTo(MenuContainer menuToFocus)
@@ -142,7 +143,7 @@ public partial class MenuManager : Control
         else
         {
             Command_UIRoot_CloseCurrentMenu new_command = new();
-            InputReceived.Invoke(new_command);
+            InputReceived?.Invoke(new_command);
         }
     }
 
@@ -155,45 +156,31 @@ public partial class MenuManager : Control
     //Consider spinning this off into a separate script as a static function that takes in a Command Resource and the 
     //Map of Commands to Handlers as arguments and then returns the appropriate handler.
     //That way all of the manager scripts can utilize that.
-    public void ProcessCommand(Resource commandToProcess)
+
+    public void PreProcessCommand(Resource commandToProcess)
     {
         if (commandToProcess == null)
         {
-            //Maybe we would want to warn that no command resource was assigned for a signal later on
-            //while testing such a warning would fire off constantly since we are testing incomplete menus
-            //which would flood the log with a bunch of noise. Something to keep in mind.
-            //regardless, if we don't actually receive any command data then we don't want to do anything.
             return;
         }
-
-        if (commandToProcess is Command processing_command)
+        CommandProcessor.BundleUnspooler(commandToProcess, ProcessCommand);
+    }
+    public void ProcessCommand(Command commandToProcess)
+    {
+        ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
+        if (process_result.WrongDomain)
         {
-            GD.Print("MenuManager has received a UIEvent");
-            if (processing_command?.Domain == CommandDomain.UINested)
-            {
-                if (CommandToHandlerMap.TryGetValue(commandToProcess.GetType(), out var handler))
-                {
-                    handler(processing_command);
-                }
-                else
-                {
-                    GD.PushError("MenuManager received a UI command that has no handler associated with it!");
-                }
-            }
-            else
-            {
-                InputReceived?.Invoke(commandToProcess);
-            }
+            InputReceived?.Invoke(commandToProcess);
+        }
+        else if (process_result.Handler == null)
+        {
+            GD.PushError("The MenuManager got an in domain command with no handler for it!");
         }
         else
         {
-            GD.PushError("MenuManager received a resource that wasn't a Command!");
+            process_result.Handler(commandToProcess);
         }
-    }
-
-    private void Unsubscribe(MenuContainer menuToUnsubscribeFrom)
-	{
-        menuToUnsubscribeFrom.InputReceived -= ProcessCommand;
+            
     }
 
     private void SetupHandlerMap()
@@ -201,6 +188,7 @@ public partial class MenuManager : Control
         CommandToHandlerMap.Add(typeof(Command_UINested_FocusMenu), HandleCommandFocusMenu);
         CommandToHandlerMap.Add(typeof(Command_UINested_HideMenu), HandleCommandHideMenu);
         CommandToHandlerMap.Add(typeof(Command_UINested_PopFocus), HandleCommandPopFocus);
+        CommandToHandlerMap.Add(typeof(Command_UINested_ShowFocusGroup), HandleCommandShowFocusGroup);
         CommandToHandlerMap.Add(typeof(Command_UINested_ShowMenu), HandleCommandShowMenu);
     }
 
@@ -221,6 +209,19 @@ public partial class MenuManager : Control
     private void HandleCommandPopFocus(Command currentCommand)
     {
         PopFocusFrom();
+    }
+
+    private void HandleCommandShowFocusGroup(Command currentCommand)
+    {
+        Command_UINested_ShowFocusGroup temp = (Command_UINested_ShowFocusGroup)currentCommand;
+        MenuContainer show_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        HashSet<MenuContainer> hide_targets = CurrentFocusedMenu.GetFocusGroup(show_target);
+        
+        foreach (MenuContainer menu_to_hide in hide_targets)
+        {
+            HideMenu(menu_to_hide);
+        }
+        ShowMenu(show_target);
     }
 
     private void HandleCommandShowMenu(Command currentCommand)

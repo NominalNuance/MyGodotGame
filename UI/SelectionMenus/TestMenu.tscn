@@ -3,51 +3,41 @@
 [ext_resource type="PackedScene" uid="uid://cjbf4c6rfant1" path="res://UI/Primitives/MenuContainer.tscn" id="1_shoke"]
 [ext_resource type="PackedScene" uid="uid://dbf7cpfohn80c" path="res://UI/Primitives/MenuManager.tscn" id="1_wpy1y"]
 [ext_resource type="PackedScene" uid="uid://c42mxm7fs2155" path="res://UI/Primitives/selection_box.tscn" id="2_m2027"]
-[ext_resource type="PackedScene" uid="uid://ui0on4df3rl" path="res://UI/Primitives/Dynamic Text Container.tscn" id="4_esuxv"]
 [ext_resource type="Script" uid="uid://ysu3e5qpqvoe" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_FocusMenu.cs" id="4_td77y"]
-[ext_resource type="Script" uid="uid://cu208nj6748st" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_ShowMenu.cs" id="5_wpy1y"]
-[ext_resource type="Script" uid="uid://cm28qk3541k7c" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_HideMenu.cs" id="6_hhwgl"]
+[ext_resource type="PackedScene" uid="uid://b7f7r8svl5hmy" path="res://UI/Primitives/MenuOption.tscn" id="5_td77y"]
+[ext_resource type="Script" uid="uid://d15aikvflj4il" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_ShowFocusGroup.cs" id="7_td77y"]
 [ext_resource type="Script" uid="uid://duxvy6oslqrvm" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_PopFocus.cs" id="8_wpy1y"]
 
-[sub_resource type="Resource" id="Resource_wtaya"]
+[sub_resource type="Resource" id="Resource_td77y"]
 resource_local_to_scene = true
+resource_name = "UINested_PopFocus_Res"
 script = ExtResource("8_wpy1y")
-
-[sub_resource type="Resource" id="Resource_chsc5"]
-resource_local_to_scene = true
-script = ExtResource("4_td77y")
-Target = 1
-
-[sub_resource type="Resource" id="Resource_t04fd"]
-resource_local_to_scene = true
-script = ExtResource("5_wpy1y")
-Target = 1
 
 [sub_resource type="Resource" id="Resource_wpy1y"]
 resource_local_to_scene = true
-script = ExtResource("6_hhwgl")
+script = ExtResource("4_td77y")
 Target = 1
 
 [sub_resource type="Resource" id="Resource_hhwgl"]
 resource_local_to_scene = true
+script = ExtResource("7_td77y")
+Target = 1
+
+[sub_resource type="Resource" id="Resource_wtaya"]
+resource_local_to_scene = true
 script = ExtResource("4_td77y")
-Target = 2
+Target = 1
 
-[sub_resource type="Resource" id="Resource_w1m3h"]
+[sub_resource type="Resource" id="Resource_chsc5"]
 resource_local_to_scene = true
-script = ExtResource("5_wpy1y")
+script = ExtResource("7_td77y")
 Target = 2
 
-[sub_resource type="Resource" id="Resource_oadtq"]
-resource_local_to_scene = true
-script = ExtResource("6_hhwgl")
-Target = 2
-
-[sub_resource type="Resource" id="Resource_4ik17"]
+[sub_resource type="Resource" id="Resource_t04fd"]
 resource_local_to_scene = true
 script = ExtResource("8_wpy1y")
 
-[sub_resource type="Resource" id="Resource_247fl"]
+[sub_resource type="Resource" id="Resource_w1m3h"]
 resource_local_to_scene = true
 script = ExtResource("8_wpy1y")
 
@@ -59,7 +49,7 @@ ThisSelectionBox = NodePath("HBoxContainer/SelectionBox1")
 NestedMenuContainers = {
 1: NodePath("HBoxContainer/MenuContainer1"),
 2: NodePath("HBoxContainer/MenuContainer2"),
-3: NodePath("MenuContainer3")
+3: NodePath("HBoxContainer/MenuContainer3")
 }
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MenuContainer" index="0" unique_id=396847300]
@@ -72,35 +62,26 @@ theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 OptionsContainer = NodePath("VBoxContainer")
-CancelData = SubResource("Resource_wtaya")
+CancelData = SubResource("Resource_td77y")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MenuContainer/HBoxContainer/SelectionBox1" index="0" unique_id=411961832]
 custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
 
-[node name="DynamicTextContainer" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="0" unique_id=1013979701 instance=ExtResource("4_esuxv")]
+[node name="MenuOption0" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="0" unique_id=603208674 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 6
-_content = "Menu 1"
-ConfirmData = SubResource("Resource_chsc5")
-FocusData = SubResource("Resource_t04fd")
-UnfocusData = SubResource("Resource_wpy1y")
+Content = "Menu 1"
+ConfirmData = SubResource("Resource_wpy1y")
+FocusData = SubResource("Resource_hhwgl")
 
-[node name="DynamicTextContainer2" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="1" unique_id=2012368404 instance=ExtResource("4_esuxv")]
+[node name="MenuOption1" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="1" unique_id=1014171285 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 6
-_content = "Menu 2"
-ConfirmData = SubResource("Resource_hhwgl")
-FocusData = SubResource("Resource_w1m3h")
-UnfocusData = SubResource("Resource_oadtq")
+Content = "Menu 2"
+ConfirmData = SubResource("Resource_wtaya")
+FocusData = SubResource("Resource_chsc5")
 
-[node name="DynamicTextContainer3" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="2" unique_id=667759859 instance=ExtResource("4_esuxv")]
+[node name="MenuOption2" parent="MenuContainer/HBoxContainer/SelectionBox1/VBoxContainer" index="2" unique_id=451229681 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 6
-_content = "Menu null"
 
 [node name="MenuContainer1" parent="MenuContainer/HBoxContainer" index="1" unique_id=1926969970 node_paths=PackedStringArray("ThisSelectionBox") instance=ExtResource("1_shoke")]
 layout_mode = 2
@@ -109,67 +90,47 @@ ThisSelectionBox = NodePath("SelectionBox")
 [node name="SelectionBox" parent="MenuContainer/HBoxContainer/MenuContainer1" index="0" unique_id=286537677 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_m2027")]
 layout_mode = 2
 OptionsContainer = NodePath("GridContainer")
-CancelData = SubResource("Resource_4ik17")
+CancelData = SubResource("Resource_t04fd")
 
 [node name="GridContainer" type="GridContainer" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox" index="0" unique_id=588138273]
 layout_mode = 2
 columns = 2
 
-[node name="DynamicTextContainer" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="0" unique_id=1090832671 instance=ExtResource("4_esuxv")]
+[node name="MenuOption0" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="0" unique_id=122492443 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 6
-_content = "Option 1"
 
-[node name="DynamicTextContainer2" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="1" unique_id=186437010 instance=ExtResource("4_esuxv")]
+[node name="MenuOption1" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="1" unique_id=868516581 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 6
-_content = "Option 2"
 
-[node name="DynamicTextContainer3" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="2" unique_id=99654258 instance=ExtResource("4_esuxv")]
+[node name="MenuOption2" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="2" unique_id=1377182984 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 6
-_content = "Option 3"
 
-[node name="DynamicTextContainer4" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="3" unique_id=1419306809 instance=ExtResource("4_esuxv")]
+[node name="MenuOption3" parent="MenuContainer/HBoxContainer/MenuContainer1/SelectionBox/GridContainer" index="3" unique_id=547073925 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 6
-_content = "Option 4"
 
-[node name="MenuContainer2" parent="MenuContainer/HBoxContainer" index="2" unique_id=835091930 instance=ExtResource("1_shoke")]
-visible = false
+[node name="MenuContainer2" parent="MenuContainer/HBoxContainer" index="2" unique_id=835091930 node_paths=PackedStringArray("ThisSelectionBox") instance=ExtResource("1_shoke")]
 layout_mode = 2
+ThisSelectionBox = NodePath("SelectionBox")
 
 [node name="SelectionBox" parent="MenuContainer/HBoxContainer/MenuContainer2" index="0" unique_id=1054463487 node_paths=PackedStringArray("OptionsContainer") instance=ExtResource("2_m2027")]
 layout_mode = 2
 OptionsContainer = NodePath("VBoxContainer")
-CancelData = SubResource("Resource_247fl")
+CancelData = SubResource("Resource_w1m3h")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox" index="0" unique_id=1190537467]
 layout_mode = 2
 
-[node name="HBoxContainer" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="0" unique_id=1088749714 instance=ExtResource("4_esuxv")]
+[node name="MenuOption0" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="0" unique_id=1004755974 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 6
-_content = "Option 1"
 
-[node name="HBoxContainer2" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="1" unique_id=2003855291 instance=ExtResource("4_esuxv")]
+[node name="MenuOption1" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="1" unique_id=551936412 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 6
-_content = "Option 2"
 
-[node name="HBoxContainer3" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="2" unique_id=608468383 instance=ExtResource("4_esuxv")]
+[node name="MenuOption2" parent="MenuContainer/HBoxContainer/MenuContainer2/SelectionBox/VBoxContainer" index="2" unique_id=1743296893 instance=ExtResource("5_td77y")]
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 6
-_content = "Option 3"
 
-[node name="MenuContainer3" parent="MenuContainer" index="1" unique_id=284338953 instance=ExtResource("1_shoke")]
+[node name="MenuContainer3" parent="MenuContainer/HBoxContainer" index="3" unique_id=284338953 instance=ExtResource("1_shoke")]
+visible = false
 layout_mode = 2
 
 [node name="Cursor" parent="." index="1" unique_id=1148804156]

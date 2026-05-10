@@ -18,6 +18,7 @@ public partial class UIManager : Control
     private Dictionary<MenuID, MenuManager> ManagedElements = [];
     private MenuManager CurrentRootMenu;
     private UISignalProcessor SignalProcessor = new();
+    private CommandDomain ThisDomain = CommandDomain.UIRoot;
 
     //We will figure this out later after we can actually process events succesfully
 
@@ -27,7 +28,7 @@ public partial class UIManager : Control
 	{
         SetupHandlerMap();
         Command_UIRoot_OpenMenu OpenMenuEvent = new(MenuID.TestMenu);
-        ProcessCommand(OpenMenuEvent);
+        PreProcessCommand(OpenMenuEvent);
         //OpenMenu(MenuID.TestMenu);
     }
 
@@ -97,28 +98,7 @@ public partial class UIManager : Control
     }
     private void InstantiateUIElement(MenuID menuToInstantiate)
     {
-        if (ManagedElements.ContainsKey(menuToInstantiate))
-        {
-            GD.PushWarning("UI tried to instantiate a menu that already exists.");
-            return;
-        }
-        PackedScene menu_to_instantiate = MenuLibrary.GetMenu(menuToInstantiate);
-        if (menu_to_instantiate == null)
-        {
-            throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it!");
-        }
-
-        Node temp = menu_to_instantiate.Instantiate();
-        if (temp is MenuManager new_menu)
-            {
-                ManagedElements.Add(menuToInstantiate, new_menu);
-                AddChild(new_menu);
-                new_menu.InputReceived += ProcessCommand;
-            }
-            else
-            {
-                GD.PushError("Unable to convert Node to MenuContainer");
-            }
+        UIInstantiate(menuToInstantiate);
     }
     private void OpenMenu(MenuID menuToOpen)
     {
@@ -137,23 +117,37 @@ public partial class UIManager : Control
         }
         else 
         {
-            PackedScene menu_to_instantiate = MenuLibrary.GetMenu(menuToOpen) 
-                ?? throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it!");
-            Node temp = menu_to_instantiate.Instantiate();
-            if (temp is MenuManager new_menu)
-            {
-                ManagedElements.Add(menuToOpen, new_menu);
-                AddChild(new_menu);
-                CurrentRootMenu = new_menu;
-                CurrentRootMenu.Show();
-                CurrentRootMenu.InputReceived += ProcessCommand;
-                CurrentRootMenu.GainFocus();
-            }
-            else
-            {
-                GD.PushError("Unable to convert Node to MenuContainer");
-            }
+            MenuManager new_menu = UIInstantiate(menuToOpen) 
+                ?? throw new Exception("UI Manager tried Opening a menu it could not instantiate.");
+            CurrentRootMenu = new_menu;
+            CurrentRootMenu.Show();
+            CurrentRootMenu.GainFocus();
         } 
+    }
+
+    private MenuManager UIInstantiate (MenuID menuToInstantiate)
+    {
+        MenuManager menu_to_return = null;
+        if (ManagedElements.ContainsKey(menuToInstantiate))
+        {
+            GD.PushWarning("UI tried to instantiate a menu that already exists.");
+            return menu_to_return;
+        }
+        PackedScene menu_to_instantiate = MenuLibrary.GetMenu(menuToInstantiate) 
+            ?? throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it!");
+        Node temp = menu_to_instantiate.Instantiate();
+        if (temp is MenuManager new_menu)
+        {
+            ManagedElements.Add(menuToInstantiate, new_menu);
+            AddChild(new_menu);
+            new_menu.InputReceived += PreProcessCommand;
+            menu_to_return = new_menu;
+        }
+        else
+        {
+            GD.PushError("Unable to convert Node to MenuManager");
+        }
+        return menu_to_return;
     }
 
     //Figure out some way to remove focus from the CurrentRootMenu
@@ -192,45 +186,35 @@ public partial class UIManager : Control
     //Consider spinning this off into a separate script as a static function that takes in a Command Resource and the 
     //Map of Commands to Handlers as arguments and then returns the appropriate handler.
     //That way all of the manager scripts can utilize that.
-    public void ProcessCommand(Resource commandToProcess)
+
+    public void PreProcessCommand(Resource commandToProcess)
     {
         if (commandToProcess == null)
         {
-            //Maybe we would want to warn that no command resource was assigned for a signal later on
-            //while testing such a warning would fire off constantly since we are testing incomplete menus
-            //which would flood the log with a bunch of noise. Something to keep in mind.
-            //regardless, if we don't actually receive any command data then we don't want to do anything.
             return;
         }
-
-        if (commandToProcess is Command processing_command)
-        {
-        GD.Print("UIManager has received a UIEvent");
-        if (processing_command?.Domain == CommandDomain.UIRoot)
-        {
-            if (CommandToHandlerMap.TryGetValue(commandToProcess.GetType(), out var handler))
-            {
-                handler(processing_command);
-            }
-            else
-            {
-                GD.PushError("UIManager received a UI command that has no handler associated with it!");
-            }
-        }
-        else
-        {
-            SignalProcessor.ProcessCommand(processing_command);
-        }
-        }
-        else
-        {
-            GD.PushError("UI received a resource that wasn't a Command!");
-        }
+        CommandProcessor.BundleUnspooler(commandToProcess, ProcessCommand);
     }
-
+    public void ProcessCommand(Command commandToProcess)
+    {
+        ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
+        if (process_result.WrongDomain)
+        {
+            SignalProcessor.ProcessCommand(commandToProcess);
+        }
+        else if (process_result.Handler == null)
+        {
+            GD.PushError("The UIManager got an in domain command with no handler for it!");
+        }
+        else
+        {
+            process_result.Handler(commandToProcess);
+        }
+            
+    }
     private void Unsubscribe(MenuManager menuToUnsubscribeFrom)
 	{
-        menuToUnsubscribeFrom.InputReceived -= ProcessCommand;
+        menuToUnsubscribeFrom.InputReceived -= PreProcessCommand;
     }
 
     private void SetupHandlerMap()

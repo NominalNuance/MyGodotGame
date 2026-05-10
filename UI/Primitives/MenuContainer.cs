@@ -2,6 +2,7 @@ using EroJRPG.Commands;
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EroJRPG.UI.Primitives;
 
@@ -41,7 +42,18 @@ public partial class MenuContainer : MarginContainer
 
 	[Export] private Godot.Collections.Dictionary<ControlGroups, MenuContainer> NestedMenuContainers = [];
 
+
+	//For now we will assume this will also be our FocusGroup, if necesarry
+	//If those two concepts diverge, we can handle that
 	private HashSet<MenuContainer> PrivateMenuContainers =[];
+
+	/*
+	//Meant for the situation where many different options may want to exclusively show some preview of another menu
+	//Like before, this should only have directly nested MenuContainers
+	[Export] private Godot.Collections.Array<MenuContainer> FocusGroup = [];
+
+	private HashSet<MenuContainer> PrivateFocusGroup = [];
+	*/
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -69,6 +81,20 @@ public partial class MenuContainer : MarginContainer
 				unique_menu_container.FocusReceived += OptionFocusReceived;
 			}
 		}
+		/*
+		if (FocusGroup.Count > 0)
+		{
+            foreach (var menu_container in FocusGroup)
+			{
+				ValidateNestedContainer(menu_container);
+				if(!PrivateFocusGroup.Add(menu_container))
+				{
+					GD.PushWarning("A menu container has duplicate entries in its FocusGroup.");
+				}
+			}
+		}
+		*/
+
 		if (ThisSelectionBox != null && FocusTarget == null)
 		{
 			FocusTarget = ThisSelectionBox;
@@ -167,6 +193,16 @@ public partial class MenuContainer : MarginContainer
 	public MenuContainer GetNestedMenu(ControlGroups menuToGet)
 	{
 		return NestedMenuContainers[menuToGet];
+	}
+
+	public HashSet<MenuContainer> GetFocusGroup(MenuContainer menuToExclude)
+	{
+		HashSet<MenuContainer> result = [.. PrivateMenuContainers.Where
+		(
+			menu => !ReferenceEquals(menu, menuToExclude)
+		)];
+
+		return result;
 	}
 
 	private void OptionInputReceived(Resource inputCommand)

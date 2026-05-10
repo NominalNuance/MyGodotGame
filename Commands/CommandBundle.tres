@@ -1,0 +1,8 @@
+[gd_resource type="Resource" format=3 uid="uid://ck5ohfvbatvgt"]
+
+[ext_resource type="Script" uid="uid://dlwyiygkc3w7b" path="res://Commands/CommandBundle.cs" id="1_elxmf"]
+
+[resource]
+resource_local_to_scene = true
+script = ExtResource("1_elxmf")
+Payload = Array[Resource]([])

@@ -19,7 +19,7 @@ public partial class SelectionBox : MarginContainer
 	//There should be a public interface for this to allow for the addition of options and removal of options
 	//That would be for dynamic and not static menus. It may be the case that we might need a different
 	//Kind of selection box for dynamic menus.
-	private List<DynamicTextContainer> MenuOptions = [];
+	private List<MenuOption> MenuOptions = [];
 
 	private Control LastFocusedOption = null;
 	public override void _Ready()
@@ -53,13 +53,12 @@ public partial class SelectionBox : MarginContainer
 
 		foreach (Node child in OptionsContainer.GetChildren()) 
 		{
-			if (child is DynamicTextContainer control)
+			if (child is MenuOption control)
 			{
 				control.FocusMode = FocusModeEnum.None;
 				control.OptionMoused += OptionMoused;
 				control.OptionFocused += OptionFocused;
 				control.OptionConfirmed += OptionConfirmReceived;
-				control.OptionUnfocused += OptionUnfocused;
 
 				MenuOptions.Add(control);
 			}
@@ -73,12 +72,11 @@ public partial class SelectionBox : MarginContainer
 
 	private void UnsubscribeOptions()
 	{
-		foreach (DynamicTextContainer control in MenuOptions) 
+		foreach (MenuOption control in MenuOptions) 
 		{
 			control.OptionMoused -= OptionMoused;
 			control.OptionFocused -= OptionFocused;
 			control.OptionConfirmed -= OptionConfirmReceived;
-			control.OptionUnfocused -= OptionUnfocused;
 		}
 	}
 
@@ -174,7 +172,7 @@ public partial class SelectionBox : MarginContainer
     {
         if (MenuOptions.Count > 0)
 		{
-			foreach (DynamicTextContainer option in MenuOptions )
+			foreach (MenuOption option in MenuOptions )
 			{
 				option.FocusMode = FocusModeEnum.All;
 			}
@@ -192,7 +190,7 @@ public partial class SelectionBox : MarginContainer
 
 	public void BecomeInactive()
 	{
-		foreach (DynamicTextContainer option in MenuOptions )
+		foreach (MenuOption option in MenuOptions )
 		{
 			option.FocusMode = FocusModeEnum.None;
 		}
@@ -226,11 +224,6 @@ public partial class SelectionBox : MarginContainer
 		GD.Print("An option has been confirmed.");
 		InputReceived?.Invoke(confirmEvent);
 			
-	}
-
-	private void OptionUnfocused(Resource unfocusEvent)
-	{
-		InputReceived?.Invoke(unfocusEvent);
 	}
 
 	private void OptionCancelReceived()

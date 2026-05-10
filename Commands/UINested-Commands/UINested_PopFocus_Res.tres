@@ -4,4 +4,5 @@
 
 [resource]
 resource_local_to_scene = true
+resource_name = "UINested_PopFocus_Res"
 script = ExtResource("1_tqekt")

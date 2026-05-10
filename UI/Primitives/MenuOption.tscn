@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://b7f7r8svl5hmy"]
+
+[ext_resource type="Script" uid="uid://bpgep1mro4vt" path="res://UI/Primitives/MenuOption.cs" id="1_o5r86"]
+[ext_resource type="PackedScene" uid="uid://ui0on4df3rl" path="res://UI/Primitives/Dynamic Text Container.tscn" id="2_ogpos"]
+
+[node name="MenuOption" type="MarginContainer" unique_id=603208674]
+offset_right = 32.0
+offset_bottom = 16.0
+size_flags_horizontal = 6
+size_flags_vertical = 6
+script = ExtResource("1_o5r86")
+Content = "Test"
+
+[node name="DynamicTextContainer" parent="." unique_id=1013979701 instance=ExtResource("2_ogpos")]
+layout_mode = 2

@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="Command_UINested_ShowFocusGroup" format=3 uid="uid://dk7e5gmvpd1k0"]
+
+[ext_resource type="Script" uid="uid://d15aikvflj4il" path="res://Commands/UINested-Commands/UINested-Scripts/Command_UINested_ShowFocusGroup.cs" id="1_1it62"]
+
+[resource]
+resource_local_to_scene = true
+script = ExtResource("1_1it62")
+Target = 1
