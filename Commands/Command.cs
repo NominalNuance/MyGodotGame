@@ -9,7 +9,8 @@ public enum CommandDomain
     Invalid,
     UIRoot,
     UINested,
-    Game
+    Game,
+    Entity
 }
 
 //Child classes are to be named using Ypotryll_Case with the format being

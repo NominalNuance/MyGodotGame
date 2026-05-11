@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://budn0jn7s0g6x"]
+
+[ext_resource type="Script" uid="uid://cdw6s5tde541w" path="res://Main/GameManager.cs" id="1_788r3"]
+
+[node name="GameManager" type="Node" unique_id=50097868]
+script = ExtResource("1_788r3")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1722084498]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.74, 0.7876666, 1, 1)

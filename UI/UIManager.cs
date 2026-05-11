@@ -15,9 +15,9 @@ namespace EroJRPG.UI;
 public partial class UIManager : Control
 {
 
+    public event Action<Resource> CommandReceived;
     private Dictionary<MenuID, MenuManager> ManagedElements = [];
     private MenuManager CurrentRootMenu;
-    private UISignalProcessor SignalProcessor = new();
     private CommandDomain ThisDomain = CommandDomain.UIRoot;
 
     //We will figure this out later after we can actually process events succesfully
@@ -27,9 +27,6 @@ public partial class UIManager : Control
     public override void _Ready()
 	{
         SetupHandlerMap();
-        Command_UIRoot_OpenMenu OpenMenuEvent = new(MenuID.TestMenu);
-        PreProcessCommand(OpenMenuEvent);
-        //OpenMenu(MenuID.TestMenu);
     }
 
     public override void _Input(InputEvent @event)
@@ -134,13 +131,13 @@ public partial class UIManager : Control
             return menu_to_return;
         }
         PackedScene menu_to_instantiate = MenuLibrary.GetMenu(menuToInstantiate) 
-            ?? throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it!");
+            ?? throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it! Maybe try adding that to the MenuLibrary?");
         Node temp = menu_to_instantiate.Instantiate();
         if (temp is MenuManager new_menu)
         {
             ManagedElements.Add(menuToInstantiate, new_menu);
             AddChild(new_menu);
-            new_menu.InputReceived += PreProcessCommand;
+            new_menu.CommandReceived += ForwardCommand;
             menu_to_return = new_menu;
         }
         else
@@ -183,28 +180,33 @@ public partial class UIManager : Control
         }
     }
 
-    //Consider spinning this off into a separate script as a static function that takes in a Command Resource and the 
-    //Map of Commands to Handlers as arguments and then returns the appropriate handler.
-    //That way all of the manager scripts can utilize that.
-
-    public void PreProcessCommand(Resource commandToProcess)
+    private void ForwardCommand(Resource commandToForward)
     {
-        if (commandToProcess == null)
-        {
-            return;
-        }
-        CommandProcessor.BundleUnspooler(commandToProcess, ProcessCommand);
+        CommandReceived?.Invoke(commandToForward);
     }
     public void ProcessCommand(Command commandToProcess)
     {
+        if (commandToProcess.Domain == CommandDomain.UINested)
+        {
+            if (CurrentRootMenu != null)
+            {
+                CurrentRootMenu.ProcessCommand(commandToProcess);
+            }
+            else
+            {
+                GD.PushError("UIManager received a UINested Command but has no active menu to give it to!");
+            }
+            return;
+        }
+
         ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
         if (process_result.WrongDomain)
         {
-            SignalProcessor.ProcessCommand(commandToProcess);
+            GD.PushError($"The UIManager got a command with the wrong domain! Domain of received command: {commandToProcess.Domain}");
         }
         else if (process_result.Handler == null)
         {
-            GD.PushError("The UIManager got an in domain command with no handler for it!");
+            GD.PushError($"The UIManager got an in domain command with no handler for it! Command was {commandToProcess.GetType()}");
         }
         else
         {
@@ -214,7 +216,7 @@ public partial class UIManager : Control
     }
     private void Unsubscribe(MenuManager menuToUnsubscribeFrom)
 	{
-        menuToUnsubscribeFrom.InputReceived -= PreProcessCommand;
+        menuToUnsubscribeFrom.CommandReceived -= ForwardCommand;
     }
 
     private void SetupHandlerMap()

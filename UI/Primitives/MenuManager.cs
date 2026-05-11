@@ -10,7 +10,7 @@ namespace EroJRPG.UI;
 
 public partial class MenuManager : Control
 {
-    public event Action<Resource> InputReceived;
+    public event Action<Resource> CommandReceived;
     private MenuContainer CurrentFocusedMenu;
 
     private Stack<FocusCard> FocusStack = [];
@@ -50,7 +50,7 @@ public partial class MenuManager : Control
             return;
         }
 
-        ManagedMenuRootContainer.InputReceived += PreProcessCommand;
+        ManagedMenuRootContainer.InputReceived += ForwardCommand;
         ManagedMenuRootContainer.FocusReceived += ProcessFocus;
     }
     
@@ -58,7 +58,7 @@ public partial class MenuManager : Control
 	{
 		if (ManagedMenuRootContainer != null)
 		{
-			ManagedMenuRootContainer.InputReceived -= PreProcessCommand;
+			ManagedMenuRootContainer.InputReceived -= ForwardCommand;
             ManagedMenuRootContainer.FocusReceived -= ProcessFocus;
 		}
 	}
@@ -143,7 +143,7 @@ public partial class MenuManager : Control
         else
         {
             Command_UIRoot_CloseCurrentMenu new_command = new();
-            InputReceived?.Invoke(new_command);
+            CommandReceived?.Invoke(new_command);
         }
     }
 
@@ -152,29 +152,20 @@ public partial class MenuManager : Control
         ThisCursor.Show();
         ThisCursor.MoveCursor(focusTarget);
     }
-
-    //Consider spinning this off into a separate script as a static function that takes in a Command Resource and the 
-    //Map of Commands to Handlers as arguments and then returns the appropriate handler.
-    //That way all of the manager scripts can utilize that.
-
-    public void PreProcessCommand(Resource commandToProcess)
+    private void ForwardCommand(Resource commandToForward)
     {
-        if (commandToProcess == null)
-        {
-            return;
-        }
-        CommandProcessor.BundleUnspooler(commandToProcess, ProcessCommand);
+        CommandReceived?.Invoke(commandToForward);
     }
     public void ProcessCommand(Command commandToProcess)
     {
         ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
         if (process_result.WrongDomain)
         {
-            InputReceived?.Invoke(commandToProcess);
+            GD.PushError($"The MenuManager got a command with the wrong domain! Domain of received command: {commandToProcess.Domain}");
         }
         else if (process_result.Handler == null)
         {
-            GD.PushError("The MenuManager got an in domain command with no handler for it!");
+            GD.PushError($"The MenuManager got an in domain command with no handler for it! Command was {commandToProcess.GetType()}");
         }
         else
         {
