@@ -1,5 +1,6 @@
 using EroJRPG.Commands;
 using EroJRPG.Commands.UI;
+using EroJRPG.Entities;
 using EroJRPG.UI;
 using Godot;
 using System;
@@ -12,18 +13,23 @@ public partial class Main : Node
     private CommandRouter TheCommandRouter = new();
     private UIManager TheUIManager;
     private GameManager TheGameManager;
+    private EntityManager TheEntityManager;
     public override void _EnterTree()
     {
         base._EnterTree();
         TheUIManager = GetNode<UIManager>("%UIManager");
         TheGameManager = GetNode<GameManager>("%GameManager");
+        TheEntityManager = GetNode<EntityManager>("%EntityManager");
+
 
         TheCommandRouter.RegisterHandler(CommandDomain.UINested, TheUIManager.ProcessCommand);
         TheCommandRouter.RegisterHandler(CommandDomain.UIRoot,   TheUIManager.ProcessCommand);
         TheCommandRouter.RegisterHandler(CommandDomain.Game,     TheGameManager.ProcessCommand);
+        TheCommandRouter.RegisterHandler(CommandDomain.Entity,   TheEntityManager.ProcessCommand);
 
         TheUIManager.CommandReceived += TheCommandRouter.RouteCommand;
         TheGameManager.CommandReceived += TheCommandRouter.RouteCommand;
+        TheEntityManager.CommandReceived += TheCommandRouter.RouteCommand;
     }
 
     public override void _Ready()

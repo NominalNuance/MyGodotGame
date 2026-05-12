@@ -3,9 +3,13 @@
 [ext_resource type="Script" uid="uid://nbvurpfkdiax" path="res://Main/Main.cs" id="1_amygn"]
 [ext_resource type="PackedScene" uid="uid://budn0jn7s0g6x" path="res://Main/GameManager.tscn" id="1_lxy7q"]
 [ext_resource type="PackedScene" uid="uid://cqbk3uptnh7j" path="res://UI/UIManager.tscn" id="2_83ytx"]
+[ext_resource type="PackedScene" uid="uid://14o0ql6lu884" path="res://Entities/EntityManager.tscn" id="2_ps1la"]
 
 [node name="Main" type="Node" unique_id=249768035]
 script = ExtResource("1_amygn")
+
+[node name="EntityManager" parent="." unique_id=742635056 instance=ExtResource("2_ps1la")]
+unique_name_in_owner = true
 
 [node name="GameManager" parent="." unique_id=50097868 instance=ExtResource("1_lxy7q")]
 unique_name_in_owner = true
