@@ -28,6 +28,24 @@
 			}
 		}
 	},
+	"HealthBundle": {
+		"MaxHealth": {
+			"Keeper": "NumericalKeeper",
+			"Type": "int",
+			"Value": 100
+		},
+		"CurrentHealth": {
+			"Keeper": "BoundedKeeper",
+			"Type": "int",
+			"Value": 100,
+			"Dependencies": {
+				"BoundRule": {
+					"maxBound": "MaxHealth",
+					"minBound": 0
+				}
+			}
+		}
+	},
 	"PlayerCharacterBundle": {
 		"MaxHealth": {
 			"Keeper": "ProductKeeper",

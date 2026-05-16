@@ -3,12 +3,15 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public partial class Entity : Node
+namespace EroJRPG.Entities;
+public class EntityData
 {
+    public int ID {get; private set;}
     private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
 
-    public override void _Ready()
+    public EntityData(int newID)
     {
+        ID = newID;
         SetupHandlerMap();
     }
 

@@ -7,6 +7,7 @@ namespace EroJRPG.Commands;
 public enum CommandDomain
 {
     Invalid,
+    State,
     UIRoot,
     UINested,
     Game,

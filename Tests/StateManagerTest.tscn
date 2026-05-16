@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://dwxhx5y4x2jkv"]
-
-[ext_resource type="Script" uid="uid://cdqky0kol3eee" path="res://Tests/StateManagerTest.cs" id="1_1r8ll"]
-
-[node name="StateManagerTest" type="Node"]
-script = ExtResource("1_1r8ll")

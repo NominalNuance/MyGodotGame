@@ -8,12 +8,14 @@ using Godot;
 
 public class StateBundle
 {
-    public string BundleName { get; private set; } = "";
+    public string BundleName { get; private set; }
+    public int BundleID { get; private set; }
     public Dictionary<string, StateKeeper> Keepers { get; private set; } = [];
 
-    public StateBundle (string newBundleName, Dictionary<string, BundleStateTemplate> newBundleTemplateDict)
+    public StateBundle (string newBundleName, int newBundleID, Dictionary<string, BundleStateTemplate> newBundleTemplateDict)
     {
         BundleName = newBundleName;
+        BundleID = newBundleID;
         InitializeKeepers(newBundleTemplateDict);
     }
 

@@ -1,6 +1,7 @@
 using EroJRPG.Commands;
 using EroJRPG.Commands.UI;
 using EroJRPG.Entities;
+using EroJRPG.Scripts.StateManager;
 using EroJRPG.UI;
 using Godot;
 using System;
@@ -11,6 +12,7 @@ public partial class Main : Node
 {
 
     private CommandRouter TheCommandRouter = new();
+    private StateManager TheStateManager;
     private UIManager TheUIManager;
     private GameManager TheGameManager;
     private EntityManager TheEntityManager;
@@ -26,6 +28,7 @@ public partial class Main : Node
         TheCommandRouter.RegisterHandler(CommandDomain.UIRoot,   TheUIManager.ProcessCommand);
         TheCommandRouter.RegisterHandler(CommandDomain.Game,     TheGameManager.ProcessCommand);
         TheCommandRouter.RegisterHandler(CommandDomain.Entity,   TheEntityManager.ProcessCommand);
+        TheCommandRouter.RegisterHandler(CommandDomain.State,    TheStateManager.ProcessCommand);
 
         TheUIManager.CommandReceived += TheCommandRouter.RouteCommand;
         TheGameManager.CommandReceived += TheCommandRouter.RouteCommand;
