@@ -1,6 +1,7 @@
 
-using EroJRPG.Commands;
-using EroJRPG.Commands.UI;
+using EroJRPG.Main;
+using EroJRPG.Requests;
+using EroJRPG.Requests.Commands.UI;
 using EroJRPG.UI.Primitives;
 using Godot;
 using System;
@@ -12,22 +13,11 @@ namespace EroJRPG.UI;
 //Consider how HUDs will be managed with this system. Will HUDs require a MenuManager or would they just require a MenuContainer/UIContainer? 
 //Maybe a third kind of manager - a HUDManager. That feels a bit bloated right now though. It's not an immediate concern but it is something
 //To consider for the future after the menu system is finished. Currently, all UIElements are MenuManagers. Maybe the HUDManager is just a separate thing?
-public partial class UIManager : Control
+public partial class UIManager : AManager
 {
-
-    public event Action<Resource> CommandReceived;
     private Dictionary<MenuID, MenuManager> ManagedElements = [];
-    private MenuManager CurrentRootMenu;
-    private CommandDomain ThisDomain = CommandDomain.UIRoot;
-
-    //We will figure this out later after we can actually process events succesfully
-
-    private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
-
-    public override void _Ready()
-	{
-        SetupHandlerMap();
-    }
+    private MenuManager CurrentRootMenu = null;
+    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.UIRoot;
 
     public override void _Input(InputEvent @event)
     {
@@ -77,7 +67,7 @@ public partial class UIManager : Control
     {
         if (ManagedElements.TryGetValue(menuToFocus, out MenuManager targetMenu))
         {
-            if (targetMenu.Visible)
+            if (targetMenu.IsVisible())
             {
                 CurrentRootMenu?.LoseFocus();
                 CurrentRootMenu = targetMenu;
@@ -179,59 +169,41 @@ public partial class UIManager : Control
             GD.PushWarning("UIManager tried to destroy a menu that doesn't exist!");
         }
     }
-
-    private void ForwardCommand(Resource commandToForward)
+    public override object ProcessRequest(IRequest requestToProcess)
     {
-        CommandReceived?.Invoke(commandToForward);
-    }
-    public void ProcessCommand(Command commandToProcess)
-    {
-        if (commandToProcess.Domain == CommandDomain.UINested)
+        if (requestToProcess.Domain == RequestDomain.UINested)
         {
             if (CurrentRootMenu != null)
             {
-                CurrentRootMenu.ProcessCommand(commandToProcess);
+                CurrentRootMenu.ProcessRequest(requestToProcess);
             }
             else
             {
                 GD.PushError("UIManager received a UINested Command but has no active menu to give it to!");
             }
-            return;
+            return null;
         }
 
-        ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
-        if (process_result.WrongDomain)
-        {
-            GD.PushError($"The UIManager got a command with the wrong domain! Domain of received command: {commandToProcess.Domain}");
-        }
-        else if (process_result.Handler == null)
-        {
-            GD.PushError($"The UIManager got an in domain command with no handler for it! Command was {commandToProcess.GetType()}");
-        }
-        else
-        {
-            process_result.Handler(commandToProcess);
-        }
-            
+        return base.ProcessRequest(requestToProcess);       
     }
+
     private void Unsubscribe(MenuManager menuToUnsubscribeFrom)
 	{
         menuToUnsubscribeFrom.CommandReceived -= ForwardCommand;
     }
 
-    private void SetupHandlerMap()
+    protected override void SetupHandlerMap()
     {   
-        CommandToHandlerMap.Add(typeof(Command_UIRoot_OpenMenu), HandleCommandOpenMenu);
-        CommandToHandlerMap.Add(typeof(Command_UIRoot_CloseCurrentMenu), HandleCommandCloseCurrentMenu);
+        RegisterCommand<Command_UIRoot_OpenMenu>(HandleCommandOpenMenu);
+        RegisterCommand<Command_UIRoot_CloseCurrentMenu>(HandleCommandCloseCurrentMenu);
     }
 
-    private void HandleCommandOpenMenu(Command currentCommand)
+    private void HandleCommandOpenMenu(Command_UIRoot_OpenMenu currentCommand)
     {
-        Command_UIRoot_OpenMenu temp = (Command_UIRoot_OpenMenu)currentCommand;
-        OpenMenu(temp.Target);
+        OpenMenu(currentCommand.Target);
     }
 
-    private void HandleCommandCloseCurrentMenu(Command currentCommand)
+    private void HandleCommandCloseCurrentMenu(Command_UIRoot_CloseCurrentMenu currentCommand)
     {
         CloseCurrentMenu();
     }

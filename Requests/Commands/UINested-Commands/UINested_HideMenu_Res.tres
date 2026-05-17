@@ -1,0 +1,8 @@
+[gd_resource type="Resource" format=3 uid="uid://ccvx5vbfcc0mg"]
+
+[ext_resource type="Script" uid="uid://cm28qk3541k7c" path="res://Requests/Commands/UINested-Commands/UINested-Scripts/Command_UINested_HideMenu.cs" id="1_525wn"]
+
+[resource]
+resource_local_to_scene = true
+script = ExtResource("1_525wn")
+Target = 1

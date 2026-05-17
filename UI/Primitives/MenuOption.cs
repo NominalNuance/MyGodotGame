@@ -1,3 +1,5 @@
+using EroJRPG.Requests;
+using EroJRPG.Requests.Commands;
 using Godot;
 using System;
 
@@ -5,8 +7,8 @@ namespace EroJRPG.UI.Primitives;
 public partial class MenuOption : MarginContainer
 {
     public event Action<Control> OptionMoused;
-    public event Action<Control, Resource> OptionFocused;
-    public event Action<Resource> OptionConfirmed;
+    public event Action<Control, Command> OptionFocused;
+    public event Action<Command> OptionConfirmed;
 
     private DynamicTextContainer ThisTextContainer;
 
@@ -15,8 +17,8 @@ public partial class MenuOption : MarginContainer
 
     //This is meant to hold the information for what happens when the option is "confirmed"
     //To be consumed by the UIManager
-    [Export] public Resource ConfirmData;
-    [Export] public Resource FocusData;
+    [Export] public Command ConfirmData;
+    [Export] public Command FocusData;
     public override void _Ready()
 	{
         ThisTextContainer = GetNode<DynamicTextContainer>("DynamicTextContainer");

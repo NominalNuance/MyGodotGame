@@ -1,39 +1,36 @@
 
-using EroJRPG.Commands;
-using EroJRPG.Commands.UI;
+using EroJRPG.Main;
+using EroJRPG.Requests;
+using EroJRPG.Requests.Commands.UI;
 using EroJRPG.UI.Primitives;
 using Godot;
-using System;
 using System.Collections.Generic;
 
 namespace EroJRPG.UI;
 
-public partial class MenuManager : Control
+public partial class MenuManager : AManager
 {
-    public event Action<Resource> CommandReceived;
     private MenuContainer CurrentFocusedMenu;
 
     private Stack<FocusCard> FocusStack = [];
 
-    private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
-
-    private MenuContainer ManagedMenuRootContainer = null;
+    private MenuContainer RootManagedMenuContainer = null;
     private Cursor ThisCursor;
     [Export] private PackedScene PackedGhostCursor;
-    private CommandDomain ThisDomain = CommandDomain.UINested;
+    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.UINested;
 
     public override void _Ready()
 	{
+        base._Ready();
         ThisCursor = GetNode<Cursor>("Cursor");
-        SetupHandlerMap();
         Godot.Collections.Array<Node> child_nodes = GetChildren();
         foreach (Node possible_container in child_nodes)
         {
             if (possible_container is MenuContainer root_container)
             {
-                if (ManagedMenuRootContainer ==  null)
+                if (RootManagedMenuContainer ==  null)
                 {
-                    ManagedMenuRootContainer = root_container;
+                    RootManagedMenuContainer = root_container;
                 }
                 else
                 {
@@ -44,22 +41,22 @@ public partial class MenuManager : Control
             }
         }
         
-        if (ManagedMenuRootContainer == null)
+        if (RootManagedMenuContainer == null)
         {
             GD.PushError("A MenuManager has no MenuContainer to manage!");
             return;
         }
 
-        ManagedMenuRootContainer.InputReceived += ForwardCommand;
-        ManagedMenuRootContainer.FocusReceived += ProcessFocus;
+        RootManagedMenuContainer.InputReceived += ForwardCommand;
+        RootManagedMenuContainer.FocusReceived += ProcessFocus;
     }
     
     private void Unsubscribe()
 	{
-		if (ManagedMenuRootContainer != null)
+		if (RootManagedMenuContainer != null)
 		{
-			ManagedMenuRootContainer.InputReceived -= ForwardCommand;
-            ManagedMenuRootContainer.FocusReceived -= ProcessFocus;
+			RootManagedMenuContainer.InputReceived -= ForwardCommand;
+            RootManagedMenuContainer.FocusReceived -= ProcessFocus;
 		}
 	}
 
@@ -68,10 +65,25 @@ public partial class MenuManager : Control
 		Unsubscribe();
 	}
 
+    public void Hide()
+    {
+        RootManagedMenuContainer.Hide();
+    }
+
+    public void Show()
+    {
+        RootManagedMenuContainer.Show();
+    }
+
+    public bool IsVisible()
+    {
+        return RootManagedMenuContainer.Visible;
+    }
+
     public void GainFocus()
     {
-        CurrentFocusedMenu = ManagedMenuRootContainer;
-        ManagedMenuRootContainer.ReceiveFocus();
+        CurrentFocusedMenu = RootManagedMenuContainer;
+        RootManagedMenuContainer.ReceiveFocus();
     }
 
     public void LoseFocus()
@@ -82,7 +94,7 @@ public partial class MenuManager : Control
         }
         ThisCursor.Hide();
         FocusStack.Clear();
-        ManagedMenuRootContainer.ClearRememberedFocusOptions();
+        RootManagedMenuContainer.ClearRememberedFocusOptions();
         CurrentFocusedMenu?.DeactivateSelectionBox();
         CurrentFocusedMenu = null;
     }
@@ -143,7 +155,7 @@ public partial class MenuManager : Control
         else
         {
             Command_UIRoot_CloseCurrentMenu new_command = new();
-            CommandReceived?.Invoke(new_command);
+            ForwardCommand(new_command);
         }
     }
 
@@ -152,60 +164,35 @@ public partial class MenuManager : Control
         ThisCursor.Show();
         ThisCursor.MoveCursor(focusTarget);
     }
-    private void ForwardCommand(Resource commandToForward)
-    {
-        CommandReceived?.Invoke(commandToForward);
-    }
-    public void ProcessCommand(Command commandToProcess)
-    {
-        ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
-        if (process_result.WrongDomain)
-        {
-            GD.PushError($"The MenuManager got a command with the wrong domain! Domain of received command: {commandToProcess.Domain}");
-        }
-        else if (process_result.Handler == null)
-        {
-            GD.PushError($"The MenuManager got an in domain command with no handler for it! Command was {commandToProcess.GetType()}");
-        }
-        else
-        {
-            process_result.Handler(commandToProcess);
-        }
-            
-    }
-
-    private void SetupHandlerMap()
+    protected override void SetupHandlerMap()
     {   
-        CommandToHandlerMap.Add(typeof(Command_UINested_FocusMenu), HandleCommandFocusMenu);
-        CommandToHandlerMap.Add(typeof(Command_UINested_HideMenu), HandleCommandHideMenu);
-        CommandToHandlerMap.Add(typeof(Command_UINested_PopFocus), HandleCommandPopFocus);
-        CommandToHandlerMap.Add(typeof(Command_UINested_ShowFocusGroup), HandleCommandShowFocusGroup);
-        CommandToHandlerMap.Add(typeof(Command_UINested_ShowMenu), HandleCommandShowMenu);
+        RegisterCommand<Command_UINested_FocusMenu>(HandleCommandFocusMenu);
+        RegisterCommand<Command_UINested_HideMenu>(HandleCommandHideMenu);
+        RegisterCommand<Command_UINested_PopFocus>(HandleCommandPopFocus);
+        RegisterCommand<Command_UINested_ShowFocusGroup>(HandleCommandShowFocusGroup);
+        RegisterCommand<Command_UINested_ShowMenu>(HandleCommandShowMenu);
     }
 
-    private void HandleCommandFocusMenu(Command currentCommand)
+    private void HandleCommandFocusMenu(Command_UINested_FocusMenu currentCommand)
     {
-        Command_UINested_FocusMenu temp = (Command_UINested_FocusMenu)currentCommand;
-        MenuContainer focus_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        MenuContainer focus_target = CurrentFocusedMenu.GetNestedMenu(currentCommand.Target);
         PushFocusTo(focus_target);
     }
 
-    private void HandleCommandHideMenu(Command currentCommand)
+    private void HandleCommandHideMenu(Command_UINested_HideMenu currentCommand)
     {
-        Command_UINested_HideMenu temp = (Command_UINested_HideMenu)currentCommand;
-        MenuContainer hide_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        MenuContainer hide_target = CurrentFocusedMenu.GetNestedMenu(currentCommand.Target);
         HideMenu(hide_target);
     }
 
-    private void HandleCommandPopFocus(Command currentCommand)
+    private void HandleCommandPopFocus(Command_UINested_PopFocus currentCommand)
     {
         PopFocusFrom();
     }
 
-    private void HandleCommandShowFocusGroup(Command currentCommand)
+    private void HandleCommandShowFocusGroup(Command_UINested_ShowFocusGroup currentCommand)
     {
-        Command_UINested_ShowFocusGroup temp = (Command_UINested_ShowFocusGroup)currentCommand;
-        MenuContainer show_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        MenuContainer show_target = CurrentFocusedMenu.GetNestedMenu(currentCommand.Target);
         HashSet<MenuContainer> hide_targets = CurrentFocusedMenu.GetFocusGroup(show_target);
         
         foreach (MenuContainer menu_to_hide in hide_targets)
@@ -215,10 +202,9 @@ public partial class MenuManager : Control
         ShowMenu(show_target);
     }
 
-    private void HandleCommandShowMenu(Command currentCommand)
+    private void HandleCommandShowMenu(Command_UINested_ShowMenu currentCommand)
     {
-        Command_UINested_ShowMenu temp = (Command_UINested_ShowMenu)currentCommand;
-        MenuContainer show_target = CurrentFocusedMenu.GetNestedMenu(temp.Target);
+        MenuContainer show_target = CurrentFocusedMenu.GetNestedMenu(currentCommand.Target);
         ShowMenu(show_target);
     }
 

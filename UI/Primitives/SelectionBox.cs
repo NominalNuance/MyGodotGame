@@ -1,4 +1,5 @@
-using EroJRPG.Commands;
+using EroJRPG.Requests;
+using EroJRPG.Requests.Commands;
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -9,12 +10,12 @@ namespace EroJRPG.UI.Primitives;
 public partial class SelectionBox : MarginContainer
 {
 	public event Action<Control> FocusReceived;
-	public event Action<Resource> InputReceived;
+	public event Action<ICommand> InputReceived;
 
 
 	[Export] public Control OptionsContainer;
 
-	[Export] public Resource CancelData;
+	[Export] public Command CancelData;
 	
 	//There should be a public interface for this to allow for the addition of options and removal of options
 	//That would be for dynamic and not static menus. It may be the case that we might need a different
@@ -211,7 +212,7 @@ public partial class SelectionBox : MarginContainer
 		mousedObject.GrabFocus();
 		GD.Print("An option has been moused.");
 	}
-	private void OptionFocused(Control focusedObject, Resource focusEvent)
+	private void OptionFocused(Control focusedObject, ICommand focusEvent)
 	{
 		LastFocusedOption = focusedObject;
 		GD.Print("An option has been focused.");
@@ -219,7 +220,7 @@ public partial class SelectionBox : MarginContainer
 		FocusReceived?.Invoke(focusedObject);
 	}
 
-	private void OptionConfirmReceived(Resource confirmEvent)
+	private void OptionConfirmReceived(ICommand confirmEvent)
 	{
 		GD.Print("An option has been confirmed.");
 		InputReceived?.Invoke(confirmEvent);

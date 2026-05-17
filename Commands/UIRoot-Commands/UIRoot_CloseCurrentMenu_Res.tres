@@ -1,7 +1,0 @@
-[gd_resource type="Resource" format=3 uid="uid://dht2ytlf2gfi3"]
-
-[ext_resource type="Script" uid="uid://c8x73g5wkf05x" path="res://Commands/UIRoot-Commands/UIRoot-Scripts/Command_UIRoot_CloseCurrentMenu.cs" id="1_7glcn"]
-
-[resource]
-resource_local_to_scene = true
-script = ExtResource("1_7glcn")

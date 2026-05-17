@@ -1,4 +1,4 @@
-using EroJRPG.Commands;
+using EroJRPG.Requests;
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -28,7 +28,7 @@ public enum ControlGroups
 public partial class MenuContainer : MarginContainer
 {
 	public event Action<Control> FocusReceived;
-	public event Action<Resource> InputReceived;
+	public event Action<ICommand> InputReceived;
 
 
 	//MenuContainers can contain at most one SelectionBox. MenuContainers can also contain other MenuContainers at the same time
@@ -205,10 +205,10 @@ public partial class MenuContainer : MarginContainer
 		return result;
 	}
 
-	private void OptionInputReceived(Resource inputCommand)
+	private void OptionInputReceived(ICommand inputRequest)
 	{
 		GD.Print("A menu container received an input event.");
-		InputReceived?.Invoke(inputCommand);
+		InputReceived?.Invoke(inputRequest);
 	}
 
 	private void OptionFocusReceived(Control focusedThing)

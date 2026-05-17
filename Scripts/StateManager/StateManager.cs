@@ -1,10 +1,10 @@
 using Godot;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System;
-using System.Linq;
 using EroJRPG.Scripts.StateManager.TemplateDirectory;
-using EroJRPG.Commands;
+using EroJRPG.Requests;
+using EroJRPG.Main;
+using EroJRPG.Requests.Mutations;
 
 namespace EroJRPG.Scripts.StateManager;
 
@@ -17,40 +17,22 @@ namespace EroJRPG.Scripts.StateManager;
 // create templates for default values for StateBundles <- DONE
 
 
-public partial class StateManager : Node
+public partial class StateManager : AManager
 {
     private Dictionary<int, Dictionary<string, State>> StateDictionary = [];
     private Dictionary<int, Dictionary<string, object>> CachedStates = [];
     private Dictionary<int, StateBundle> StateBundles = [];
     private int nextID = 0;
-    private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
-    private CommandDomain ThisDomain = CommandDomain.State;
+    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.State;
 
-    public override void _Ready()
-    {
-        SetupHandlerMap();
-    }
-    public void ProcessCommand(Command commandToProcess)
-    {
-        ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
-        if (process_result.WrongDomain)
-        {
-            GD.PushError($"The StateManager received a command with the wrong domain! Domain of received command: {commandToProcess.Domain}");
-        }
-        else if (process_result.Handler == null)
-        {
-            GD.PushError($"The StateManager got an in domain command with no handler for it! Command was {commandToProcess.GetType()}");
-        }
-        else
-        {
-            process_result.Handler(commandToProcess);
-        }
-            
-    }
-
-    private void SetupHandlerMap()
+    protected override void SetupHandlerMap()
     {   
-        //CommandToHandlerMap.Add(typeof(Command_Game_ChangeBackgroundColor), HandleChangeBackgroundColor);
+        RegisterMutation<Mutation_State_CreateStateBundle, int>(HandleCreateStateBundle);
+    }
+
+    private int HandleCreateStateBundle(Mutation_State_CreateStateBundle currentMutation)
+    {
+        return CreateBundle(currentMutation.BundleToCreate);
     }
     public object GetState(int bundleIDToGet, string stateName)
     {
@@ -138,7 +120,7 @@ public partial class StateManager : Node
             GD.PushWarning($"StateManager Unsubscribe: Bundle ID '{bundleIDToUnsubscribeFrom}' not found.");
         } 
     }
-    public int CreateBundle(string bundleTemplateKey, string bundleDefaultsName = "")
+    private int CreateBundle(string bundleTemplateKey, string bundleDefaultsName = "")
     {
         StateBundle new_bundle = new(bundleTemplateKey, nextID, TemplateLoader.BundleTemplates[bundleTemplateKey]);
         nextID++;

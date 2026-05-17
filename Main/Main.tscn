@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://budn0jn7s0g6x" path="res://Main/GameManager.tscn" id="1_lxy7q"]
 [ext_resource type="PackedScene" uid="uid://cqbk3uptnh7j" path="res://UI/UIManager.tscn" id="2_83ytx"]
 [ext_resource type="PackedScene" uid="uid://14o0ql6lu884" path="res://Entities/EntityManager.tscn" id="2_ps1la"]
+[ext_resource type="PackedScene" uid="uid://crx67f1sy3t48" path="res://Scripts/StateManager/StateManager.tscn" id="5_6aewd"]
 
 [node name="Main" type="Node" unique_id=249768035]
 script = ExtResource("1_amygn")
@@ -15,4 +16,7 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="UIManager" parent="." unique_id=1285525041 instance=ExtResource("2_83ytx")]
+unique_name_in_owner = true
+
+[node name="StateManager" parent="." unique_id=826077314 instance=ExtResource("5_6aewd")]
 unique_name_in_owner = true

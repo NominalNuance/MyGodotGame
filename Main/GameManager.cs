@@ -1,54 +1,29 @@
-using EroJRPG.Commands;
-using EroJRPG.Commands.Game;
+using EroJRPG.Requests.Commands.Game;
+using EroJRPG.Requests;
 using Godot;
 using System;
 using System.Collections.Generic;
 
 namespace EroJRPG.Main;
 
-public partial class GameManager : Node
+public partial class GameManager : AManager
 {
-    public event Action<Resource> CommandReceived;
-    private Dictionary<Type, Action<Command>> CommandToHandlerMap = [];
-    private CommandDomain ThisDomain = CommandDomain.Game;
     private ColorRect ThisColorRect;
+
+    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.Game;
 
     public override void _Ready()
     {
         ThisColorRect = GetNode<ColorRect>("%ColorRect");
-
-        SetupHandlerMap();
+        base._Ready();
     }
-
-    private void ForwardCommand(Resource commandToForward)
-    {
-        CommandReceived?.Invoke(commandToForward);
-    }
-    public void ProcessCommand(Command commandToProcess)
-    {
-        ProcessResult process_result = CommandProcessor.Process(CommandToHandlerMap, commandToProcess, ThisDomain);
-        if (process_result.WrongDomain)
-        {
-            GD.PushError($"The GameManager received a command with the wrong domain! Domain of received command: {commandToProcess.Domain}");
-        }
-        else if (process_result.Handler == null)
-        {
-            GD.PushError($"The GameManager got an in domain command with no handler for it! Command was {commandToProcess.GetType()}");
-        }
-        else
-        {
-            process_result.Handler(commandToProcess);
-        }
-            
-    }
-    private void SetupHandlerMap()
+    protected override void SetupHandlerMap()
     {   
-        CommandToHandlerMap.Add(typeof(Command_Game_ChangeBackgroundColor), HandleChangeBackgroundColor);
+        RegisterCommand<Command_Game_ChangeBackgroundColor>(HandleChangeBackgroundColor);
     }
 
-    private void HandleChangeBackgroundColor(Command currentCommand)
+    private void HandleChangeBackgroundColor(Command_Game_ChangeBackgroundColor currentCommand)
     {
-        Command_Game_ChangeBackgroundColor temp = (Command_Game_ChangeBackgroundColor)currentCommand;
-        ThisColorRect.Color = temp.TargetColor;
+        ThisColorRect.Color = currentCommand.TargetColor;
     }
 }

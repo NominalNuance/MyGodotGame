@@ -1,6 +1,0 @@
-[gd_resource type="Resource" format=3 uid="uid://cdp26d70hklhd"]
-
-[ext_resource type="Script" uid="uid://bakkffhqu0h3e" path="res://Commands/Game-Commands/Game-Scripts/Command_Game_ChangeBackgroundColor.cs" id="1_fu3ic"]
-
-[resource]
-script = ExtResource("1_fu3ic")

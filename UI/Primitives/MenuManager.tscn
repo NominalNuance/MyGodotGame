@@ -4,17 +4,16 @@
 [ext_resource type="PackedScene" uid="uid://chdka3aeexwo3" path="res://UI/Primitives/GhostCursor.tscn" id="2_0xt7d"]
 [ext_resource type="PackedScene" uid="uid://c1ftwjffhp41j" path="res://UI/Primitives/cursor.tscn" id="2_01pn0"]
 
-[node name="MenuManager" type="Control" unique_id=1863106164]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="MenuManager" type="Node" unique_id=1159072987]
 script = ExtResource("1_v6kfx")
 PackedGhostCursor = ExtResource("2_0xt7d")
 
 [node name="Cursor" parent="." unique_id=1148804156 instance=ExtResource("2_01pn0")]
 visible = false
-layout_mode = 0
 anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 1
+grow_vertical = 1

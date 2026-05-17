@@ -1,0 +1,7 @@
+[gd_resource type="Resource" format=3 uid="uid://c5xmqk4e7sfnu"]
+
+[ext_resource type="Script" uid="uid://ysu3e5qpqvoe" path="res://Requests/Commands/UINested-Commands/UINested-Scripts/Command_UINested_FocusMenu.cs" id="1_hn8f4"]
+
+[resource]
+resource_local_to_scene = true
+script = ExtResource("1_hn8f4")
