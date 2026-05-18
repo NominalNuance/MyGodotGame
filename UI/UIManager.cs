@@ -17,7 +17,7 @@ public partial class UIManager : AManager
 {
     private Dictionary<MenuID, MenuManager> ManagedElements = [];
     private MenuManager CurrentRootMenu = null;
-    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.UIRoot;
+    public override RequestDomain ThisDomain { get; } = RequestDomain.UIRoot;
 
     public override void _Input(InputEvent @event)
     {
@@ -175,13 +175,13 @@ public partial class UIManager : AManager
         {
             if (CurrentRootMenu != null)
             {
-                CurrentRootMenu.ProcessRequest(requestToProcess);
+                return CurrentRootMenu.ProcessRequest(requestToProcess);
             }
             else
             {
                 GD.PushError("UIManager received a UINested Command but has no active menu to give it to!");
+                return null;
             }
-            return null;
         }
 
         return base.ProcessRequest(requestToProcess);       

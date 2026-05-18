@@ -6,7 +6,8 @@ public enum RequestDomain
     UIRoot,
     UINested,
     Game,
-    Entity
+    Entity,
+    EntityInstance
 }
 public interface IRequest
 {

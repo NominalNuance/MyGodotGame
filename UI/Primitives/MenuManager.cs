@@ -17,7 +17,7 @@ public partial class MenuManager : AManager
     private MenuContainer RootManagedMenuContainer = null;
     private Cursor ThisCursor;
     [Export] private PackedScene PackedGhostCursor;
-    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.UINested;
+    public override RequestDomain ThisDomain { get; } = RequestDomain.UINested;
 
     public override void _Ready()
 	{

@@ -11,7 +11,7 @@ namespace EroJRPG.Main;
 public partial class Main : Node
 {
 
-    private RequestRouter TheRequestRouter = new();
+    private readonly RequestRouter TheRequestRouter = new();
     private StateManager TheStateManager;
     private UIManager TheUIManager;
     private GameManager TheGameManager;
@@ -23,7 +23,7 @@ public partial class Main : Node
         TheStateManager =  RegisterManager<StateManager>("%StateManager", RequestDomain.State);
         TheUIManager =     RegisterManager<UIManager>("%UIManager", [RequestDomain.UINested, RequestDomain.UIRoot]);
         TheGameManager =   RegisterManager<GameManager>("%GameManager", RequestDomain.Game);
-        TheEntityManager = RegisterManager<EntityManager>("%EntityManager", RequestDomain.Entity);
+        TheEntityManager = RegisterManager<EntityManager>("%EntityManager", [RequestDomain.Entity, RequestDomain.EntityInstance]);
     }
 
     public override void _Ready()

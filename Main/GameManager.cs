@@ -10,7 +10,7 @@ public partial class GameManager : AManager
 {
     private ColorRect ThisColorRect;
 
-    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.Game;
+    public override RequestDomain ThisDomain { get; } = RequestDomain.Game;
 
     public override void _Ready()
     {

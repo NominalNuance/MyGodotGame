@@ -6,11 +6,15 @@ public class RequestRouter : IReturnRequestRouter
 {
     //This should map domains to the appropriate manager's 'ProcessCommand` function.
     private Dictionary<RequestDomain, Func<IRequest, object>> DomainHandlerMap = [];
+
+    //For testing, we will be using a lot of incomplete menus that send null requests. We probably want to throw at some point
+    //but for now we will just give a default return.
     public ReturnType RouteQuery<ReturnType>(IQuery<ReturnType> queryToRoute)
     {
         if (queryToRoute == null)
         {
-            throw new Exception($"The RequestRouter just received a null Query!");
+            return default;
+            //throw new Exception($"The RequestRouter just received a null Query!");
         }
 
         if (DomainHandlerMap.TryGetValue(queryToRoute.Domain, out Func<IRequest, object> handler))
@@ -27,7 +31,8 @@ public class RequestRouter : IReturnRequestRouter
     {
         if (mutationToRoute == null)
         {
-            throw new Exception($"The RequestRouter just received a null Mutation!");
+            return default;
+            //throw new Exception($"The RequestRouter just received a null Mutation!");
         }
 
         if (DomainHandlerMap.TryGetValue(mutationToRoute.Domain, out Func<IRequest, object> handler))
@@ -45,7 +50,8 @@ public class RequestRouter : IReturnRequestRouter
     {
         if (commandToRoute == null)
         {
-            throw new Exception($"The RequestRouter just received a null Command!");
+            return;
+            //throw new Exception($"The RequestRouter just received a null Command!");
         }
 
         if (DomainHandlerMap.TryGetValue(commandToRoute.Domain, out Func<IRequest, object> handler))

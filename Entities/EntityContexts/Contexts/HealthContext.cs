@@ -1,20 +1,28 @@
 using EroJRPG.Requests;
+using EroJRPG.Requests.Commands.State;
 using EroJRPG.Requests.Mutations;
 
 namespace EroJRPG.Entities.EntityContexts;
 public class HealthContext : IEntityContext
 {
     public IReturnRequestRouter RequestRouter { get; set; }
-    public int EntityID { get; set; }
+    public EntityID ThisEntityID { get; set; }
+    private int HealthBundleID { get; set; }
 
-    public HealthContext(int newEntityId, IReturnRequestRouter newRequestRouter)
+    public HealthContext(EntityID newEntityId, IReturnRequestRouter newRequestRouter)
     {
-        EntityID = newEntityId;
+        ThisEntityID = newEntityId;
         RequestRouter = newRequestRouter;
     }
-    public int CreateHealthBundle()
+    public void CreateHealthBundle()
     {
         Mutation_State_CreateStateBundle temp = new("HealthBundle");
-        return RequestRouter.RouteMutation<int>(temp);
+        HealthBundleID = RequestRouter.RouteMutation(temp);
+    }
+
+    public void SetEntityHealth(int healthToSet)
+    {
+        Command_State_SetState temp = new(HealthBundleID, "CurrentHealth", healthToSet);
+        RequestRouter.RouteCommand(temp);
     }
 }

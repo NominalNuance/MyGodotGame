@@ -5,6 +5,7 @@ using EroJRPG.Scripts.StateManager.TemplateDirectory;
 using EroJRPG.Requests;
 using EroJRPG.Main;
 using EroJRPG.Requests.Mutations;
+using EroJRPG.Requests.Commands.State;
 
 namespace EroJRPG.Scripts.StateManager;
 
@@ -23,16 +24,23 @@ public partial class StateManager : AManager
     private Dictionary<int, Dictionary<string, object>> CachedStates = [];
     private Dictionary<int, StateBundle> StateBundles = [];
     private int nextID = 0;
-    public override RequestDomain ThisDomain { get; protected set; } = RequestDomain.State;
+    public override RequestDomain ThisDomain { get; } = RequestDomain.State;
 
     protected override void SetupHandlerMap()
     {   
         RegisterMutation<Mutation_State_CreateStateBundle, int>(HandleCreateStateBundle);
+        RegisterCommand<Command_State_SetState>(HandleSetState);
     }
 
     private int HandleCreateStateBundle(Mutation_State_CreateStateBundle currentMutation)
     {
         return CreateBundle(currentMutation.BundleToCreate);
+    }
+
+    private void HandleSetState(Command_State_SetState currentCommand)
+    {
+        StateAction temp = new("Set", currentCommand.TargetState);
+        Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateName, temp);
     }
     public object GetState(int bundleIDToGet, string stateName)
     {
