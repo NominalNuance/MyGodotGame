@@ -1,0 +1,1 @@
+namespace EroJRPG.Entities.EntityComponents;

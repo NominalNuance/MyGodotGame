@@ -5,13 +5,16 @@ using Godot;
 namespace EroJRPG.Requests;
 public class RequestHandlerRegistry(RequestDomain newDomain, string newOwnerName)
 {
-    public Dictionary<Type, Func<IRequest, object>> RequestToHandlerMap { get; private set; } = [];
+    private Dictionary<Type, Func<IRequest, object>> RequestToHandlerMap { get; set; } = [];
     public RequestDomain ThisDomain { get; } = newDomain;
     public string OwnerName { get; } = newOwnerName;
 
-    public void Add(Type typeToAdd, Func<IRequest, object> funcToAdd)
+    public void MergeRegistryWith(RequestHandlerRegistry registryToMerge)
     {
-        RequestToHandlerMap.Add(typeToAdd, funcToAdd);
+        foreach (var(key_type, value_func) in registryToMerge.RequestToHandlerMap)
+        {
+            RequestToHandlerMap.Add(key_type, value_func);
+        }
     }
 
     public void RegisterCommand<CommandType>(Action<CommandType> handlerToRegister) where CommandType : ICommand

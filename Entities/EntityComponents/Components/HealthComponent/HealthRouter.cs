@@ -2,18 +2,12 @@ using EroJRPG.Requests;
 using EroJRPG.Requests.Commands.State;
 using EroJRPG.Requests.Mutations;
 
-namespace EroJRPG.Entities.EntityContexts;
-public class HealthContext : IEntityContext
+namespace EroJRPG.Entities.EntityComponents.Components.HealthComponent;
+public class HealthRouter(IRequestRouter newRequestRouter) : AComponentRouter, IHealthRouter
 {
-    public IReturnRequestRouter RequestRouter { get; set; }
-    public EntityID ThisEntityID { get; set; }
+    protected override IRequestRouter RequestRouter { get; set; } = newRequestRouter;
     private int HealthBundleID { get; set; }
 
-    public HealthContext(EntityID newEntityId, IReturnRequestRouter newRequestRouter)
-    {
-        ThisEntityID = newEntityId;
-        RequestRouter = newRequestRouter;
-    }
     public void CreateHealthBundle()
     {
         Mutation_State_CreateStateBundle temp = new("HealthBundle");

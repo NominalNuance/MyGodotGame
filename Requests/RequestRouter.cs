@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 namespace EroJRPG.Requests;
-public class RequestRouter : IReturnRequestRouter
+public class RequestRouter : IRequestRouter
 {
     //This should map domains to the appropriate manager's 'ProcessCommand` function.
     private Dictionary<RequestDomain, Func<IRequest, object>> DomainHandlerMap = [];

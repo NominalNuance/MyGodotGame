@@ -7,4 +7,9 @@ public abstract class EntityComponent
     abstract public RequestHandlerRegistry RequestRegistry { get; set; }
     abstract protected void RegisterHandlers();
 
+    virtual public void RegisterInto(RequestHandlerRegistry registryToRegisterInto)
+    {
+        registryToRegisterInto.MergeRegistryWith(RequestRegistry);
+    }
+
 }

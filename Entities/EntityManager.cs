@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using EroJRPG.Entities.EntityComponents;
 using EroJRPG.Entities.EntityConfigs;
-using EroJRPG.Entities.EntityContexts;
 using EroJRPG.Main;
 using EroJRPG.Requests;
 using EroJRPG.Requests.Mutations;
+using Godot;
 
 
 namespace EroJRPG.Entities;
@@ -19,29 +19,38 @@ public partial class EntityManager : AManager
     {
         EntityID createdEntityID = NextID;
         NextID.ID++;
-        
-        EntityConfigTest temp1 = new();
-        HealthContext temp2 = new(createdEntityID, RouterInterface);
-        HealthComponent temp3 = new(temp2);
-        temp1.NewEntityStats = temp3;
 
-        EntityData new_entity = new(createdEntityID, temp1);
+        EntityData new_entity_data = new(createdEntityID);
+        foreach (IEntityComponentBlueprint blueprint in entityToCreate.GetComponentBlueprints())
+        {
+            EntityComponent component = blueprint.CreateEntityComponent(RouterInterface);
+            new_entity_data.AddComponent(component, blueprint.Slot);
+        }
 
-        EntityDictionary.Add(createdEntityID, new_entity);
-
+        EntityDictionary.Add(createdEntityID, new_entity_data);
         return createdEntityID;
     }
 
-    private void DestroyEntity()
+    private void DestroyEntity(EntityID idToDestroy)
     {
-
+        //TODO: have the EntityData run it's own cleanup/destroy procedure
+        /// stateful components should destroy their bundles
+        /// 
+        EntityDictionary.Remove(idToDestroy);
     }
 
     public override object ProcessRequest(IRequest requestToProcess)
     {
         if (requestToProcess.Domain == RequestDomain.EntityInstance)
         {
-            //Route the request to the specific entity
+            if (requestToProcess is IRequestEntityInstance entity_instance_request)
+            {
+                return EntityDictionary[entity_instance_request.TargetEntityID].ProcessRequest(requestToProcess);
+            }
+            else
+            {
+                GD.PushError($"{GetType().Name} received an EntityInstance request that doesn't have the IRequestEntityInstance interface!");
+            }
         }
 
         return base.ProcessRequest(requestToProcess);       

@@ -1,49 +1,54 @@
 using EroJRPG.Entities.EntityComponents;
-using EroJRPG.Entities.EntityConfigs;
 using EroJRPG.Requests;
-using System;
+using Godot;
 using System.Collections.Generic;
 
 namespace EroJRPG.Entities;
+
+public enum ComponentSlotEnum
+{
+    Invalid,
+    Stats,
+    Controller,
+    Generic
+}
 public class EntityData
 {
     public EntityID ID { get; }
     private readonly RequestHandlerRegistry RequestRegistry;
-    private HashSet<EntityComponentGeneric> GenericEntityComponents = [];
-    private EntityStats ThisEntityStats;
+    private readonly Dictionary<ComponentSlotEnum, List<EntityComponent>> EntityComponents = [];
 
-    public EntityData(EntityID newID, EntityConfig newConfig)
+    public EntityData(EntityID newID)
     {
         ID = newID;
-        RequestRegistry = new(RequestDomain.EntityInstance, "Entity ID: " + ID.ToString());
-        foreach (EntityComponentGeneric generic_component in newConfig.GenericEntityComponents)
-        {
-            GenericEntityComponents.Add(generic_component);
-        }
-        ThisEntityStats = newConfig.NewEntityStats;
-        SetupHandlerMap();
-    }
 
+        //we would like this to actually print the name of the EntityConfig used to create the entity
+        RequestRegistry = new(RequestDomain.EntityInstance, "Entity ID: " + ID.ToString());
+    }
+    
+    public void AddComponent(EntityComponent componentToAdd, ComponentSlotEnum slotToAddToo)
+    {
+        if (!EntityComponents.TryGetValue(slotToAddToo, out List<EntityComponent> component_list))
+        {
+            List<EntityComponent> new_list = [];
+            new_list.Add(componentToAdd);
+            EntityComponents.Add(slotToAddToo, new_list);
+        }
+        
+        else if (slotToAddToo == ComponentSlotEnum.Generic)
+        {
+            component_list.Add(componentToAdd);
+        } 
+
+        else
+        {
+         GD.PushError("EntityData tried to add a component to an already occupied slot!");
+        }
+
+        componentToAdd.RegisterInto(RequestRegistry);
+    }
     public object ProcessRequest(IRequest requestToProcess)
     {
         return RequestRegistry.ProcessRequest(requestToProcess);
-    }
-
-    private void SetupHandlerMap()
-    {   
-        foreach (EntityComponentGeneric generic_component in GenericEntityComponents)
-        {
-            Dictionary<Type, Func<IRequest, object>> component_request_map = generic_component.RequestRegistry.RequestToHandlerMap;
-            foreach (var(key_type, value_func) in component_request_map)
-            {
-                RequestRegistry.Add(key_type, value_func);
-            }
-        }
-
-        Dictionary<Type, Func<IRequest, object>> stats_request_map = ThisEntityStats.RequestRegistry.RequestToHandlerMap;
-        foreach (var(key_type, value_func) in stats_request_map)
-        {
-            RequestRegistry.Add(key_type, value_func);
-        }
     }
 }

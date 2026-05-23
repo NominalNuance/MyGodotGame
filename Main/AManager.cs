@@ -5,7 +5,7 @@ using System;
 namespace EroJRPG.Main;
 public abstract partial class AManager : Node
 {
-    public IReturnRequestRouter RouterInterface;
+    public IRequestRouter RouterInterface;
     public event Action<ICommand> CommandReceived;
     protected virtual void ForwardCommand(ICommand requestToForward)
     {
