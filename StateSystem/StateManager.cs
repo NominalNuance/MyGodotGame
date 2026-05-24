@@ -1,13 +1,12 @@
 using Godot;
 using System.Collections.Generic;
 using System;
-using EroJRPG.Scripts.StateManager.TemplateDirectory;
 using EroJRPG.Requests;
 using EroJRPG.Main;
 using EroJRPG.Requests.Mutations;
 using EroJRPG.Requests.Commands.State;
 
-namespace EroJRPG.Scripts.StateManager;
+namespace EroJRPG.StateSystem;
 
 // TODO:
 // Add a pending listener list for when a listener wants to subscribe to a state that doesn't exist yet <- DONE

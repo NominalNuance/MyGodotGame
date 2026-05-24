@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using EroJRPG.Entities.EntityComponents;
 using EroJRPG.Entities.EntityConfigs;
+using EroJRPG.Entities.EntityConfigs.Configs;
 using EroJRPG.Main;
 using EroJRPG.Requests;
 using EroJRPG.Requests.Mutations;
@@ -14,6 +15,13 @@ public partial class EntityManager : AManager
     private EntityID NextID = new(0);
     private Dictionary<EntityID, EntityData> EntityDictionary = [];
 
+    public override void _Ready()
+    {
+        base._Ready();
+        _ = RouterInterface.RouteMutation(new Mutation_Entity_CreateEntity(new EntityConfigTest()));
+        
+    }
+
 
     private EntityID CreateEntity(EntityConfig entityToCreate)
     {
@@ -23,7 +31,8 @@ public partial class EntityManager : AManager
         EntityData new_entity_data = new(createdEntityID);
         foreach (IEntityComponentBlueprint blueprint in entityToCreate.GetComponentBlueprints())
         {
-            EntityComponent component = blueprint.CreateEntityComponent(RouterInterface);
+            EntityBlueprintContext blueprint_context = new(RouterInterface);
+            EntityComponent component = blueprint.CreateEntityComponent(blueprint_context);
             new_entity_data.AddComponent(component, blueprint.Slot);
         }
 
@@ -34,7 +43,8 @@ public partial class EntityManager : AManager
     private void DestroyEntity(EntityID idToDestroy)
     {
         //TODO: have the EntityData run it's own cleanup/destroy procedure
-        /// stateful components should destroy their bundles
+        /// stateful components should destroy their bundles.
+        /// That can be accomplished after the StateManager refactor
         /// 
         EntityDictionary.Remove(idToDestroy);
     }

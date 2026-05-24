@@ -1,8 +1,6 @@
 using EroJRPG.Requests.Commands.Game;
 using EroJRPG.Requests;
 using Godot;
-using System;
-using System.Collections.Generic;
 
 namespace EroJRPG.Main;
 

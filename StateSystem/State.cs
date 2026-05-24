@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace EroJRPG.Scripts.StateManager;
+namespace EroJRPG.StateSystem;
 
 public class State(string newName, object newValue)
 {

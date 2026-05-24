@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+namespace EroJRPG.StateSystem.StateLogicRules;
+
 public class ProductBoundRule : StateLogicRule
 {    
     override public bool AcceptsAnyDependency { get; protected set; } = true;

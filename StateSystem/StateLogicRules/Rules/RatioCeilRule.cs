@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 
 
-public class RatioRule : StateLogicRule
+namespace EroJRPG.StateSystem.StateLogicRules;
+
+public class RatioCeilRule : StateLogicRule
 {
         override public List<string> DependencyKeys { get; protected set; } =
     [
@@ -15,7 +17,7 @@ public class RatioRule : StateLogicRule
     {
         double d_numerator = Convert.ToDouble(GetDependencyValue("numerator", newStateBundle, oldStateBundle));
         double d_denominator = Convert.ToDouble(GetDependencyValue("denominator", newStateBundle, oldStateBundle));
-        double quotient = Math.Round(d_numerator/d_denominator);
+        double quotient = Math.Ceiling(d_numerator/d_denominator);
         return Convert.ChangeType(quotient, currentState.GetType());
     }
 }

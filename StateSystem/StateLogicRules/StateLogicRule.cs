@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using EroJRPG.Scripts.StateManager.StateKeeper;
+
+namespace EroJRPG.StateSystem.StateLogicRules;
 
 public abstract class StateLogicRule
 {
-    virtual public List<string> DependencyKeys { get; protected set; } = [];
-    public Dictionary<string, object> Dependencies { get; protected set; } = [];
+    public Dictionary<IRuleDependencyKey, object> Dependencies { get; protected set; } = [];
     virtual public bool IsBidirectional { get; protected set; } = false;
     virtual public bool AcceptsAnyDependency { get; protected set; } = false;
 
@@ -13,20 +13,16 @@ public abstract class StateLogicRule
     public string StateName { get; set; } = "";
 
 
-    public void SetupDependency(string dependencyKey, object dependency)
+    public void SetupDependency(IRuleDependencyKey dependencyKey, object dependency)
     {
         Dependencies.Add(dependencyKey, dependency);
-        if (AcceptsAnyDependency)
-        {
-            DependencyKeys.Add(dependencyKey);
-        }
     }
     public object ExecuteLogic(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle, bool bidirectionalTrigger = false)
     {
-        if (DependencyKeys.Count == 0)
+        /*if (DependencyKeys.Count == 0)
         {
             throw new Exception($"StateLogicRule ExecuteLogic: No dependency keys assigned for this rule for the state `{StateName}`");
-        }
+        }*/
 
         object new_state;
         if (bidirectionalTrigger)
@@ -41,7 +37,7 @@ public abstract class StateLogicRule
         return new_state;
     }
 
-    protected object GetDependencyValue(string key, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    protected object GetDependencyValue(IRuleDependencyKey key, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
     {
         object dependency = Dependencies[key];
         if (dependency is StateKeeper keeper_dependency)

@@ -35,7 +35,7 @@ public class EntityData
             EntityComponents.Add(slotToAddToo, new_list);
         }
         
-        else if (slotToAddToo == ComponentSlotEnum.Generic)
+        else if (SlotAllowsMany(slotToAddToo))
         {
             component_list.Add(componentToAdd);
         } 
@@ -43,6 +43,7 @@ public class EntityData
         else
         {
          GD.PushError("EntityData tried to add a component to an already occupied slot!");
+         return;
         }
 
         componentToAdd.RegisterInto(RequestRegistry);
@@ -50,5 +51,10 @@ public class EntityData
     public object ProcessRequest(IRequest requestToProcess)
     {
         return RequestRegistry.ProcessRequest(requestToProcess);
+    }
+
+    private bool SlotAllowsMany(ComponentSlotEnum slot)
+    {
+        return slot is ComponentSlotEnum.Generic;
     }
 }

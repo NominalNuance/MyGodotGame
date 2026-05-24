@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+namespace EroJRPG.StateSystem.StateLogicRules;
 public static class StateRuleDictionary
 {
     public static Dictionary<string, Type> LogicRules { get; private set; } = [];

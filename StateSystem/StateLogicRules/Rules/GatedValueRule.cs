@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+namespace EroJRPG.StateSystem.StateLogicRules;
+
 public class GatedValueRule : StateLogicRule
 {
     override public List<string> DependencyKeys { get; protected set; } =

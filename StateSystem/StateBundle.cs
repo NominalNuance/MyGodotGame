@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using EroJRPG.Scripts.StateManager;
-using EroJRPG.Scripts.StateManager.StateKeeper;
-using EroJRPG.Scripts.StateManager.TemplateDirectory;
-using Godot;
 
+
+namespace EroJRPG.StateSystem;
 public class StateBundle
 {
     public string BundleName { get; private set; }

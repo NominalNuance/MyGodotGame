@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using EroJRPG.Scripts.Utilities;
 
-namespace EroJRPG.Scripts.StateManager.TemplateDirectory;
+namespace EroJRPG.StateSystem;
 
 [JsonConverter(typeof(BundleStateTemplateConverter))]
 public record struct BundleStateTemplate

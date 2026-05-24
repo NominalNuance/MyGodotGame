@@ -2,8 +2,8 @@ using EroJRPG.Entities;
 using EroJRPG.Entities.EntityConfigs;
 
 namespace EroJRPG.Requests.Mutations;
-public class Mutation_Entity_CreateEntity(EntityConfig newEntityToCreate) : Mutation<EntityID>
+public class Mutation_Entity_CreateEntity(EntityConfig newEntityToCreate) : IMutation<EntityID>
 {
-    public override RequestDomain Domain { get;} = RequestDomain.Entity;
+    public RequestDomain Domain { get;} = RequestDomain.Entity;
     public EntityConfig EntityToCreate = newEntityToCreate;
 }

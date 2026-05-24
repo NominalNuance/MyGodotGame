@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using EroJRPG.Scripts.StateManager.TemplateDirectory;
-using Godot;
+using EroJRPG.StateSystem.StateLogicRules;
+using EroJRPG.StateSystem.TemplateDirectory;
 
-namespace EroJRPG.Scripts.StateManager.StateKeeper;
+namespace EroJRPG.StateSystem;
 public class StateKeeper
 {
     public object StateDefaultValue { get; set; }
@@ -12,13 +11,13 @@ public class StateKeeper
     public string StateName { get; private set; } = "";
     public List<object> Dependencies { get; private set; } = []; // What I depend on
     public HashSet<StateKeeper> DependentKeepers { get; private set; } = []; // What depends on me
-    public Dictionary<string, ActionHandlerDef> ActionHandlers { get; private set; } = [];
-    public Dictionary<string, StateLogicRule> StateLogicRules { get; private set; } = [];
+    public HashSet<StateHandlerName> ActionHandlers { get; private set; } = [];
+    public List<StateLogicRule> StateLogicRules { get; private set; } = [];
 
     public bool HasRunThisAction { get; set; } = false;
     public bool DerivedState { get; set; }
 
-    public StateKeeper(string newName, object newDefaultValue, KeeperTemplate newKeeperTemplate, bool isDerived = false)
+    public StateKeeper(string newName, object newDefaultValue, IKeeperTemplate newKeeperTemplate, bool isDerived = false)
     {
         StateName = newName;
         StateDefaultValue = newDefaultValue;
@@ -47,7 +46,7 @@ public class StateKeeper
             throw new Exception($"Warning: No handler for action type: {currentAction.HandlerName}");
         }
         Dictionary<string, object> new_state_bundle = new() { { StateName, new_state } };
-        new_state_bundle[StateName] = RunLogicRules(new_state_bundle, currentStateBundle, action_info.IgnoreList ?? []);
+        new_state_bundle[StateName] = RunLogicRules(new_state_bundle, currentStateBundle);
         if (new_state_bundle[StateName] != currentStateBundle[StateName])
         {
             new_state_bundle = NotifyDependents(new_state_bundle, currentStateBundle);
@@ -59,22 +58,19 @@ public class StateKeeper
 
         return new_state_bundle;
     }
-    public object RunLogicRules(Dictionary<string, object> currentStateBundle, Dictionary<string, object> oldStateBundle, List<string> ignoreList)
+    public object RunLogicRules(Dictionary<string, object> currentStateBundle, Dictionary<string, object> oldStateBundle)
     {
         object new_state = currentStateBundle[StateName];
-        foreach (var (logic_rule_name, state_logic_rule) in StateLogicRules)
+        foreach (StateLogicRule state_logic_rule in StateLogicRules)
         {
-            if (!ignoreList.Contains(logic_rule_name))
-            {
-                new_state = state_logic_rule.ExecuteLogic(new_state, currentStateBundle, oldStateBundle);
-            }
+            new_state = state_logic_rule.ExecuteLogic(new_state, currentStateBundle, oldStateBundle);
         }
         return new_state;
     }
     public object RunBidirectionalLogicRules(Dictionary<string, object> currentStateBundle, Dictionary<string, object> oldStateBundle)
     {
         object new_state = oldStateBundle[StateName];
-        foreach (var (logic_rule_name, state_logic_rule) in StateLogicRules)
+        foreach (StateLogicRule state_logic_rule in StateLogicRules)
         {
             if (state_logic_rule.IsBidirectional)
             {
@@ -124,18 +120,19 @@ public class StateKeeper
     {
         DependentKeepers.Add(dependentKeeper);
     }
-    private void InitializeLogicRules(Dictionary<string, string> newLogicRules)
+    private void InitializeLogicRules(List<StateLogicRuleFactory> newLogicRules)
     {
-        foreach (var (internal_rule_name, rule_string) in newLogicRules)
+        foreach (StateLogicRuleFactory ruleFactory in newLogicRules)
         {
-            StateLogicRules.Add(internal_rule_name, StateRuleDictionary.GetRule(rule_string));
-            StateLogicRules[internal_rule_name].StateName = StateName;
+            StateLogicRule new_rule = ruleFactory.CreateInstance();
+            new_rule.StateName = StateName;
+            StateLogicRules.Add(new_rule);
         }
     }
-    private void SetupKeeper(KeeperTemplate newKeeperTemplate)
+    private void SetupKeeper(IKeeperTemplate newKeeperTemplate)
     {
         DerivedState = newKeeperTemplate.Derived;
-        if (newKeeperTemplate.Actions != null)
+        if (newKeeperTemplate.Actions != null || newKeeperTemplate.Actions.Count < 1)
         {
             ActionHandlers = newKeeperTemplate.Actions;
         }

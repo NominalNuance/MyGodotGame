@@ -13,7 +13,14 @@ public abstract partial class AManager : Node
     }
     private RequestHandlerRegistry RequestRegistry;
     abstract public RequestDomain ThisDomain { get; }
-    public override void _Ready()
+
+    public override void _EnterTree()
+    {
+        base._EnterTree();
+        Initialize();
+    }
+
+    public void Initialize()
     {
         RequestRegistry = new(ThisDomain, GetType().Name);
         SetupHandlerMap();
