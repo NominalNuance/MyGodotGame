@@ -1,119 +1,125 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 
 namespace EroJRPG.StateSystem;
 public class StateBundle
 {
     public string BundleName { get; private set; }
-    public int BundleID { get; private set; }
-    public Dictionary<string, StateKeeper> Keepers { get; private set; } = [];
+    public StateBundleID BundleID { get; private set; }
+    public Dictionary<IStateKey, StateKeeper> Keepers { get; private set; } = [];
 
-    public StateBundle (string newBundleName, int newBundleID, Dictionary<string, BundleStateTemplate> newBundleTemplateDict)
+    public StateBundle (IStateBundleTemplate newBundleTemplate, StateBundleID newBundleID, IBundleDefaultTemplate bundleDefaultTemplate)
     {
-        BundleName = newBundleName;
+        BundleName = newBundleTemplate.GetType().Name;
         BundleID = newBundleID;
-        InitializeKeepers(newBundleTemplateDict);
+        InitializeKeepers(newBundleTemplate);
+        SetDefaultValues(bundleDefaultTemplate, newBundleTemplate.GetType());
+        ResolveDerivedValues();
     }
 
-    public Dictionary<string, object> Dispatch(Dictionary<string, object> currentStateBundle, string stateName, StateAction currentAction)
+    public Dictionary<IStateKey, object> Dispatch(Dictionary<IStateKey, object> currentStateBundle, IStateKey stateKey, StateHandlerName handlerName, object Payload)
     {
-        Dictionary<string, object> new_bundle = Keepers[stateName].HandleAction(currentStateBundle, currentAction);
+        Dictionary<IStateKey, object> new_bundle = Keepers[stateKey].HandleAction(currentStateBundle, handlerName, Payload);
         foreach (var (_, keeper) in Keepers)
         {
             keeper.HasRunThisAction = false;
         }
         return new_bundle;
     }
-    private void InitializeKeepers(Dictionary<string, BundleStateTemplate> newBundleTemplateDict)
+    private void InitializeKeepers(IStateBundleTemplate newBundleTemplate)
     {
-        Dictionary<string, Dictionary<string, Dictionary<string, object>>> dependency_dictionary = [];
-        foreach (var (state_name, bundle_state_template) in newBundleTemplateDict)
+        Dictionary<IStateKey, IReadOnlyList<RuleDependencyTemplate>> dependency_dictionary = [];
+        foreach (IStateDefinition state_definition in newBundleTemplate.States)
         {
-            KeeperTemplate current_keeper_template = TemplateLoader.KeeperTemplates[bundle_state_template.Keeper];
-
-            if (bundle_state_template.Value != null)
+            if (state_definition.KeeperTemplate.Derived)
             {
-                Keepers.Add(state_name, new StateKeeper(state_name, bundle_state_template.Value, current_keeper_template));
+                Keepers.Add(state_definition.Key, new StateKeeper(state_definition.Key, state_definition.DefaultValueObject, 
+                state_definition.KeeperTemplate, state_definition.ValueType, state_definition.NormPolicyObject, true));
             }
             else
             {
-                Keepers.Add(state_name, new StateKeeper(state_name, null, current_keeper_template, true));
+                Keepers.Add(state_definition.Key, new StateKeeper(state_definition.Key, state_definition.DefaultValueObject, 
+                state_definition.KeeperTemplate, state_definition.ValueType, state_definition.NormPolicyObject));
             }
 
-            Keepers[state_name].StateDefaultType = bundle_state_template.Type;
 
-            if (bundle_state_template.Dependencies != null)
+            if (state_definition.Dependencies != null && state_definition.Dependencies.Count > 0)
             {
-                dependency_dictionary.Add(state_name, bundle_state_template.Dependencies);
+                dependency_dictionary.Add(state_definition.Key, state_definition.Dependencies);
             }
         }
 
         ConnectDependencies(dependency_dictionary);
-        ResolveDerivedValues();
     }
 
-    private void ConnectDependencies(Dictionary<string, Dictionary<string, Dictionary<string, object>>> dependencyDictionary)
+    private void ConnectDependencies(Dictionary<IStateKey, IReadOnlyList<RuleDependencyTemplate>> dependencyDictionary)
     {
-        foreach (var (state_name, rule_dict) in dependencyDictionary)
+        foreach (var (state_key, dependency_list) in dependencyDictionary)
         {
-            foreach (var (rule_name, dep_key_dict) in rule_dict)
+            foreach (RuleDependencyTemplate dependency_template in dependency_list)
             {
-                foreach (var (dependency_key, dependency) in dep_key_dict) 
-                {
-                    AddDependency(state_name, rule_name, dependency_key, dependency);
-                }
+                AddDependency(state_key, dependency_template);
             }
         }
     }
 
-    private void AddDependency(string targetKeeper, string ruleName, string dependencyKey, object dependency)
+    private void AddDependency(IStateKey targetStateKey, RuleDependencyTemplate dependencyTemplate)
     {
-        if (dependency is string potential_keeper_key)
+        if (dependencyTemplate.Value is IStateDependency state_depedency_defintion)
         {
-            if (Keepers.TryGetValue(potential_keeper_key, out StateKeeper keeper_dep))
+            if (Keepers.TryGetValue(state_depedency_defintion.StateKey, out StateKeeper keeper_dep))
             {
-                Keepers[targetKeeper].AddDependency(ruleName, dependencyKey, keeper_dep);
+                Keepers[targetStateKey].AddDependency(dependencyTemplate.DependencyKey, keeper_dep);
             }
+            else
+            {
+                throw new Exception($"StateBundle AddDependency: State '{targetStateKey}' depends on missing state '{state_depedency_defintion.StateKey}' in bundle '{BundleName}'.");
+            }
+        }
+        else if (dependencyTemplate.Value is IConstantDependency constant_depedency_defintion)
+        {
+            Keepers[targetStateKey].AddDependency(dependencyTemplate.DependencyKey, constant_depedency_defintion.ValueObject);
         }
         else
         {
-            Keepers[targetKeeper].AddDependency(ruleName, dependencyKey, dependency);
+            throw new Exception($"StateBundle AddDependency: Unknown dependency value type for dependency '{dependencyTemplate.DependencyKey}' on state '{targetStateKey}'.");
         }
     }
 
     private void ResolveDerivedValues()
     {
-        Dictionary<string, object> state_values = Keepers.ToDictionary(
+        Dictionary<IStateKey, object> state_values = Keepers.ToDictionary(
             kvp => kvp.Key,
             kvp => kvp.Value.StateDefaultValue
         );
-        HashSet<string> pending = new(Keepers.Where(kvp => kvp.Value.DerivedState).Select(kvp => kvp.Key));
-        HashSet<string> initialized = new(Keepers.Where(kvp => !kvp.Value.DerivedState).Select(kvp => kvp.Key));
+        HashSet<IStateKey> pending = new(Keepers.Where(kvp => kvp.Value.DerivedState).Select(kvp => kvp.Key));
+        HashSet<IStateKey> initialized = new(Keepers.Where(kvp => !kvp.Value.DerivedState).Select(kvp => kvp.Key));
 
         while (pending.Count > 0)
         {
             int previous_count = pending.Count;
-            foreach (string state_name in pending.ToList())
+            foreach (IStateKey state_key in pending.ToList())
             {
-                StateKeeper current_keeper = Keepers[state_name];
+                StateKeeper current_keeper = Keepers[state_key];
                 bool ready_to_process = current_keeper.Dependencies.All(dependency =>
                 {
-                    return !(dependency is string dependency_string && Keepers.ContainsKey(dependency_string) && !initialized.Contains(dependency_string));
+                    return !(dependency is StateKeeper dependency_keeper && Keepers.ContainsKey(dependency_keeper.StateKey) && !initialized.Contains(dependency_keeper.StateKey));
                 });
                 if (ready_to_process)
                 {
-                    Dictionary<string, object> temp = new() {{state_name, current_keeper.StateDefaultValue}};
+                    Dictionary<IStateKey, object> temp = new() {{state_key, current_keeper.StateDefaultValue}};
 
-                    object newValue = current_keeper.RunLogicRules(temp, state_values, []);
+                    object newValue = current_keeper.RunLogicRules(temp, state_values);
                     //newValue = current_keeper.RunBidirectionalLogicRules(temp, state_values);
 
                     current_keeper.StateDefaultValue = newValue;
-                    state_values[state_name] = newValue;
+                    state_values[state_key] = newValue;
 
-                    initialized.Add(state_name);
-                    pending.Remove(state_name);
+                    initialized.Add(state_key);
+                    pending.Remove(state_key);
                 }
             }
             if (previous_count == pending.Count)
@@ -123,17 +129,27 @@ public class StateBundle
         }
     }
 
-    public void SetDefaultValues(Dictionary<string, object> defaultValues)
+    public void SetDefaultValues(IBundleDefaultTemplate bundleDefaultTemplate, Type bundleType)
     {
-        foreach (var (keeper_name, default_value) in defaultValues)
+        if (bundleDefaultTemplate == null)
         {
-            if (Keepers.TryGetValue(keeper_name, out StateKeeper current_keeper))
+            return;
+        }
+
+        if (!(bundleDefaultTemplate.BundleType == bundleType))
+        {
+            throw new Exception($"Bundle SetDefaultValues: Default template of wrong type. Type of template: '{bundleDefaultTemplate.BundleType}'; Type of bundle: '{bundleType}'.");
+        }
+
+        foreach (var (state_key, default_value) in bundleDefaultTemplate.DefaultValues)
+        {
+            if (Keepers.TryGetValue(state_key, out StateKeeper current_keeper))
             {
-                current_keeper.StateDefaultValue = default_value;
+                current_keeper.StateDefaultValue = current_keeper.NormalizationPolicy.NormalizeObject(default_value);
             }
             else
             {
-                throw new Exception($"Cannot set default value: StateKeeper '{keeper_name}' not found in bundle '{BundleName}'");
+                throw new Exception($"Cannot set default value: StateKeeper '{state_key}' not found in bundle '{BundleName}'");
             }
         }
     }

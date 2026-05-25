@@ -1,23 +1,25 @@
 using System;
 using System.Collections.Generic;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem.StateLogicRules;
 
 public abstract class StateLogicRule
 {
     public Dictionary<IRuleDependencyKey, object> Dependencies { get; protected set; } = [];
+    public abstract bool AcceptsDependency(IRuleDependencyKey keyToCheck);
     virtual public bool IsBidirectional { get; protected set; } = false;
     virtual public bool AcceptsAnyDependency { get; protected set; } = false;
 
     //keep an eye on this one if we really need to keep it
-    public string StateName { get; set; } = "";
+    public IStateKey StateKey { get; set; }
 
 
     public void SetupDependency(IRuleDependencyKey dependencyKey, object dependency)
     {
         Dependencies.Add(dependencyKey, dependency);
     }
-    public object ExecuteLogic(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle, bool bidirectionalTrigger = false)
+    public object ExecuteLogic(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle, bool bidirectionalTrigger = false)
     {
         /*if (DependencyKeys.Count == 0)
         {
@@ -37,28 +39,28 @@ public abstract class StateLogicRule
         return new_state;
     }
 
-    protected object GetDependencyValue(IRuleDependencyKey key, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    protected object GetDependencyValue(IRuleDependencyKey key, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         object dependency = Dependencies[key];
         if (dependency is StateKeeper keeper_dependency)
         {
-            if (newStateBundle.TryGetValue(keeper_dependency.StateName, out object value))
+            if (newStateBundle.TryGetValue(keeper_dependency.StateKey, out object value))
             {
                 return value;
             }
             else
             {
-                return oldStateBundle[keeper_dependency.StateName];
+                return oldStateBundle[keeper_dependency.StateKey];
             }
         }
         return dependency;
     }
-    protected object GetState(Dictionary<string, object> stateBundle)
+    protected object GetState(Dictionary<IStateKey, object> stateBundle)
     {
-        return stateBundle[StateName];
+        return stateBundle[StateKey];
     }
-    public abstract object ProcessState(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle);
-    public virtual object BidirectionalProcessState(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    public abstract object ProcessState(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle);
+    public virtual object BidirectionalProcessState(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         return ProcessState(currentState, newStateBundle, oldStateBundle);
     }

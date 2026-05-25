@@ -51,7 +51,7 @@ public sealed class DoubleNormStatePolicy :INormStatePolicy<double>
     {
         if (NoNaNInfinity && (double.IsNaN(value) || double.IsInfinity(value)))
         {
-            throw new Exception($"Invlaid numeric state value: {value}");
+            throw new Exception($"Invalid numeric state value: {value}");
         }
 
         return RoundType switch

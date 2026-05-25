@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using EroJRPG.StateSystem.StateLogicRules;
 using EroJRPG.StateSystem.TemplateDirectory;
 
@@ -8,19 +9,22 @@ public class StateKeeper
 {
     public object StateDefaultValue { get; set; }
     public Type StateDefaultType { get; set; }
-    public string StateName { get; private set; } = "";
+    public IStateKey StateKey { get; private set; }
     public List<object> Dependencies { get; private set; } = []; // What I depend on
     public HashSet<StateKeeper> DependentKeepers { get; private set; } = []; // What depends on me
-    public HashSet<StateHandlerName> ActionHandlers { get; private set; } = [];
-    public List<StateLogicRule> StateLogicRules { get; private set; } = [];
-
+    public ImmutableHashSet<StateHandlerName> ActionHandlers { get; private set; } = [];
+    public Dictionary<Type, StateLogicRule> StateLogicRules { get; private set; } = [];
     public bool HasRunThisAction { get; set; } = false;
     public bool DerivedState { get; set; }
+    public INormStatePolicy NormalizationPolicy;
 
-    public StateKeeper(string newName, object newDefaultValue, IKeeperTemplate newKeeperTemplate, bool isDerived = false)
+    public StateKeeper(IStateKey newStateKey, object newDefaultValue, IKeeperTemplate newKeeperTemplate, 
+    Type newStateDefaultType, INormStatePolicy newNormalizationPolicy, bool isDerived = false)
     {
-        StateName = newName;
-        StateDefaultValue = newDefaultValue;
+        StateKey = newStateKey;
+        StateDefaultType = newStateDefaultType;
+        NormalizationPolicy = newNormalizationPolicy;
+        StateDefaultValue = NormalizationPolicy.NormalizeObject(newDefaultValue);
         DerivedState = isDerived;
         SetupKeeper(newKeeperTemplate);
 
@@ -34,20 +38,21 @@ public class StateKeeper
         }
         */
     }
-    public Dictionary<string, object> HandleAction(Dictionary<string, object> currentStateBundle, StateAction currentAction)
+    public Dictionary<IStateKey, object> HandleAction(Dictionary<IStateKey, object> currentStateBundle, StateHandlerName handlerName, object Payload)
     {
         object new_state;
-        if (ActionHandlers.TryGetValue(currentAction.HandlerName, out ActionHandlerDef action_info))
+        if (ActionHandlers.Contains(handlerName))
         {
-            new_state = StateActionHandlers.Handlers[action_info.HandlerName].Invoke(currentStateBundle[StateName], currentAction.Payload);
+            new_state = StateActionHandlers.Handlers[handlerName].Invoke(currentStateBundle[StateKey], Payload);
+            new_state = NormalizationPolicy.NormalizeObject(new_state);
         }
         else
         {
-            throw new Exception($"Warning: No handler for action type: {currentAction.HandlerName}");
+            throw new Exception($"Error! {StateKey} has no handler for action type: {handlerName}");
         }
-        Dictionary<string, object> new_state_bundle = new() { { StateName, new_state } };
-        new_state_bundle[StateName] = RunLogicRules(new_state_bundle, currentStateBundle);
-        if (new_state_bundle[StateName] != currentStateBundle[StateName])
+        Dictionary<IStateKey, object> new_state_bundle = new() { { StateKey, new_state } };
+        new_state_bundle[StateKey] = RunLogicRules(new_state_bundle, currentStateBundle);
+        if (!Equals(new_state_bundle[StateKey], currentStateBundle[StateKey]))
         {
             new_state_bundle = NotifyDependents(new_state_bundle, currentStateBundle);
         }
@@ -58,28 +63,28 @@ public class StateKeeper
 
         return new_state_bundle;
     }
-    public object RunLogicRules(Dictionary<string, object> currentStateBundle, Dictionary<string, object> oldStateBundle)
+    public object RunLogicRules(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        object new_state = currentStateBundle[StateName];
-        foreach (StateLogicRule state_logic_rule in StateLogicRules)
+        object new_state = currentStateBundle[StateKey];
+        foreach (var (_, state_logic_rule) in StateLogicRules)
         {
             new_state = state_logic_rule.ExecuteLogic(new_state, currentStateBundle, oldStateBundle);
         }
-        return new_state;
+        return NormalizationPolicy.NormalizeObject(new_state);
     }
-    public object RunBidirectionalLogicRules(Dictionary<string, object> currentStateBundle, Dictionary<string, object> oldStateBundle)
+    public object RunBidirectionalLogicRules(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        object new_state = oldStateBundle[StateName];
-        foreach (StateLogicRule state_logic_rule in StateLogicRules)
+        object new_state = oldStateBundle[StateKey];
+        foreach  (var (_, state_logic_rule) in StateLogicRules)
         {
             if (state_logic_rule.IsBidirectional)
             {
                 new_state = state_logic_rule.ExecuteLogic(new_state, currentStateBundle, oldStateBundle, true);
             }
         }
-        return new_state;
+        return NormalizationPolicy.NormalizeObject(new_state);
     }
-    private Dictionary<string, object> NotifyDependents(Dictionary<string, object> currentStateBundle, Dictionary<string, object> oldStateBundle)
+    private Dictionary<IStateKey, object> NotifyDependents(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         if (HasRunThisAction)
         {
@@ -87,62 +92,55 @@ public class StateKeeper
         }
 
         HasRunThisAction = true;
-        Dictionary<string, object> new_state_bundle = currentStateBundle;
+        Dictionary<IStateKey, object> new_state_bundle = currentStateBundle;
         foreach (StateKeeper dependent_keeper in DependentKeepers)
         {
             if (!dependent_keeper.HasRunThisAction)
             {
-                new_state_bundle[dependent_keeper.StateName] = dependent_keeper.RunBidirectionalLogicRules(new_state_bundle, oldStateBundle);
+                new_state_bundle[dependent_keeper.StateKey] = dependent_keeper.RunBidirectionalLogicRules(new_state_bundle, oldStateBundle);
                 new_state_bundle = dependent_keeper.NotifyDependents(new_state_bundle, oldStateBundle);
             }
         }
 
         return new_state_bundle;
     }
-    public void AddDependency(string ruleName, string dependencyKey, object dependency)
+
+    //Take a look at this some more
+    public void AddDependency(IRuleDependencyKey dependencyKey, object dependency)
     {
         if (dependency is StateKeeper keeper_dependency)
         {
-            Dependencies.Add(keeper_dependency.StateName);
             keeper_dependency.RegisterDependent(this);
+        }
+        Dependencies.Add(dependency);
+
+        StateLogicRule current_rule = StateLogicRules[dependencyKey.RuleType];
+        if (current_rule.AcceptsDependency(dependencyKey))
+        {
+            current_rule.SetupDependency(dependencyKey, dependency);
         }
         else
         {
-            Dependencies.Add(dependency);
-        }
-        StateLogicRule current_rule = StateLogicRules[ruleName];
-        if (current_rule.AcceptsAnyDependency || current_rule.DependencyKeys.Contains(dependencyKey))
-        {
-            current_rule.SetupDependency(dependencyKey, dependency);
+            throw new Exception($"Error! {StateKey} tried to add a dependency key for a state rule that does not have that key! DependencyKey: {dependencyKey} | Type of rule {dependencyKey.RuleType}");
         }
     }
     public void RegisterDependent(StateKeeper dependentKeeper)
     {
         DependentKeepers.Add(dependentKeeper);
     }
-    private void InitializeLogicRules(List<StateLogicRuleFactory> newLogicRules)
+    private void InitializeLogicRules(IReadOnlyList<StateLogicRuleFactory> newLogicRules)
     {
         foreach (StateLogicRuleFactory ruleFactory in newLogicRules)
         {
             StateLogicRule new_rule = ruleFactory.CreateInstance();
-            new_rule.StateName = StateName;
-            StateLogicRules.Add(new_rule);
+            new_rule.StateKey = StateKey;
+            StateLogicRules.Add(ruleFactory.RuleType, new_rule);
         }
     }
     private void SetupKeeper(IKeeperTemplate newKeeperTemplate)
     {
         DerivedState = newKeeperTemplate.Derived;
-        if (newKeeperTemplate.Actions != null || newKeeperTemplate.Actions.Count < 1)
-        {
-            ActionHandlers = newKeeperTemplate.Actions;
-        }
-        // redundent here as the KeeperTemplate tells us if it is derived. But naturally, a Keeper without actions
-        // has to be derived. It is nice to make this fact explicit in the KeeperTemplate, however.
-        else
-        {
-            DerivedState = true;
-        }
-
+        ActionHandlers = newKeeperTemplate.Actions;
         if (newKeeperTemplate.LogicRules != null)
         {
             InitializeLogicRules(newKeeperTemplate.LogicRules);

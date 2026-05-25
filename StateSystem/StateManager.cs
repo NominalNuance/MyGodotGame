@@ -5,6 +5,7 @@ using EroJRPG.Requests;
 using EroJRPG.Main;
 using EroJRPG.Requests.Mutations;
 using EroJRPG.Requests.Commands.State;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem;
 
@@ -19,39 +20,38 @@ namespace EroJRPG.StateSystem;
 
 public partial class StateManager : AManager
 {
-    private Dictionary<int, Dictionary<string, State>> StateDictionary = [];
-    private Dictionary<int, Dictionary<string, object>> CachedStates = [];
-    private Dictionary<int, StateBundle> StateBundles = [];
-    private int nextID = 0;
+    private Dictionary<StateBundleID, Dictionary<IStateKey, State>> StateDictionary = [];
+    private Dictionary<StateBundleID, Dictionary<IStateKey, object>> CachedStates = [];
+    private Dictionary<StateBundleID, StateBundle> StateBundles = [];
+    private StateBundleID nextID = new(0);
     public override RequestDomain ThisDomain { get; } = RequestDomain.State;
 
     protected override void SetupHandlerMap()
     {   
-        RegisterMutation<Mutation_State_CreateStateBundle, int>(HandleCreateStateBundle);
-        RegisterCommand<Command_State_SetState>(HandleSetState);
+        RegisterMutation<Mutation_State_CreateStateBundle, StateBundleID>(HandleCreateStateBundle);
+        RegisterCommand<Command_State_SendAction>(HandleSetState);
     }
 
-    private int HandleCreateStateBundle(Mutation_State_CreateStateBundle currentMutation)
+    private StateBundleID HandleCreateStateBundle(Mutation_State_CreateStateBundle currentMutation)
     {
-        return CreateBundle(currentMutation.BundleToCreate);
+        return CreateBundle(currentMutation.BundleToCreate, currentMutation.DefaultsToAssign);
     }
 
-    private void HandleSetState(Command_State_SetState currentCommand)
+    private void HandleSetState(Command_State_SendAction currentCommand)
     {
-        StateAction temp = new("Set", currentCommand.TargetState);
-        Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateName, temp);
+        Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.StateAction, currentCommand.Payload);
     }
-    public object GetState(int bundleIDToGet, string stateName)
+    private object GetState(StateBundleID bundleIDToGet, IStateKey stateKey)
     {
-        if (StateDictionary.TryGetValue(bundleIDToGet, out Dictionary<string, State> bundle_state_dict))
+        if (StateDictionary.TryGetValue(bundleIDToGet, out Dictionary<IStateKey, State> bundle_state_dict))
         {
-            if(bundle_state_dict.TryGetValue(stateName, out State state))
+            if(bundle_state_dict.TryGetValue(stateKey, out State state))
             {
                 return state.CurrentState;
             }
             else
             {
-                throw new Exception($"StateManager GetState: State name '{stateName}' not found in State Bundle '{bundleIDToGet}'.");
+                throw new Exception($"StateManager GetState: State name '{stateKey}' not found in State Bundle. Bundle ID:{bundleIDToGet} Bundle Name: {StateBundles[bundleIDToGet].BundleName}.");
             }
         }
         else
@@ -60,20 +60,20 @@ public partial class StateManager : AManager
         }
     }
 
-    public void Dispatch(int bundleIDToDispatchTo, string stateName, StateAction currentAction)
+    private void Dispatch(StateBundleID bundleIDToDispatchTo, IStateKey stateKey, StateHandlerName handlerName, object Payload)
     {
-        if (StateDictionary.TryGetValue(bundleIDToDispatchTo, out Dictionary<string, State> bundle_state_dict))
+        if (StateDictionary.TryGetValue(bundleIDToDispatchTo, out Dictionary<IStateKey, State> bundle_state_dict))
         {
-            if(bundle_state_dict.TryGetValue(stateName, out State state))
+            if(bundle_state_dict.ContainsKey(stateKey))
             {
-                Dictionary<string, object> current_bundle = StateBundles[bundleIDToDispatchTo].Dispatch(CachedStates[bundleIDToDispatchTo], stateName, currentAction);
+                Dictionary<IStateKey, object> current_bundle = StateBundles[bundleIDToDispatchTo].Dispatch(CachedStates[bundleIDToDispatchTo], stateKey, handlerName, Payload);
                 foreach (var (modified_state_name, modified_state) in current_bundle)
                 {
                     State current_state = bundle_state_dict[modified_state_name];
                     bundle_state_dict[modified_state_name] = current_state.UpdateState(modified_state);
                     CachedStates[bundleIDToDispatchTo][modified_state_name] = modified_state;
                 }
-                foreach (var (modified_state_name, modified_state) in current_bundle)
+                foreach (var (modified_state_name, _) in current_bundle)
                 {
                     bundle_state_dict[modified_state_name].EmitStateUpdate();
                 }
@@ -81,7 +81,7 @@ public partial class StateManager : AManager
             }
             else
             {
-                throw new Exception($"StateManager Dispatch: State name '{stateName}' not found in State Bundle '{bundleIDToDispatchTo}'.");
+                throw new Exception($"StateManager Dispatch: State name '{stateKey}' not found in State Bundle. Bundle ID:{bundleIDToDispatchTo} Bundle Name: {StateBundles[bundleIDToDispatchTo].BundleName}.");
             }
         }
         else
@@ -90,17 +90,17 @@ public partial class StateManager : AManager
         }
     }
 
-    public void Subscribe(int bundleIDToSubscribeTo, string stateName, object subscriber, Action<object> callbackFunction, Func<object, bool> conditional = null)
+    private void Subscribe(StateBundleID bundleIDToSubscribeTo, IStateKey stateKey, object subscriber, Action<object> callbackFunction, Func<object, bool> conditional = null)
     {
-        if (StateDictionary.TryGetValue(bundleIDToSubscribeTo, out Dictionary<string, State> bundle_state_dict))
+        if (StateDictionary.TryGetValue(bundleIDToSubscribeTo, out Dictionary<IStateKey, State> bundle_state_dict))
         {
-            if(bundle_state_dict.TryGetValue(stateName, out State state))
+            if(bundle_state_dict.TryGetValue(stateKey, out State state))
             {
                 state.AddListener(subscriber, callbackFunction, conditional);
             }
             else
             {
-                throw new Exception($"StateManager Subscribe: State name '{stateName}' not found in State Bundle '{bundleIDToSubscribeTo}'.");
+                throw new Exception($"StateManager Subscribe: State name '{stateKey}' not found in State Bundle. Bundle ID:{bundleIDToSubscribeTo} Bundle Name: {StateBundles[bundleIDToSubscribeTo].BundleName}.");
             }
         }
         else
@@ -109,17 +109,17 @@ public partial class StateManager : AManager
         } 
     }
 
-    public void Unsubscribe(int bundleIDToUnsubscribeFrom, string stateName, object subscriber)
+    private void Unsubscribe(StateBundleID bundleIDToUnsubscribeFrom, IStateKey stateKey, object subscriber)
     {
-       if (StateDictionary.TryGetValue(bundleIDToUnsubscribeFrom, out Dictionary<string, State> bundle_state_dict))
+       if (StateDictionary.TryGetValue(bundleIDToUnsubscribeFrom, out Dictionary<IStateKey, State> bundle_state_dict))
         {
-            if(bundle_state_dict.TryGetValue(stateName, out State state))
+            if(bundle_state_dict.TryGetValue(stateKey, out State state))
             {
                 state.RemoveListener(subscriber);
             }
             else
             {
-                throw new Exception($"StateManager Unsubscribe: State name '{stateName}' not found in State Bundle '{bundleIDToUnsubscribeFrom}'.");
+                throw new Exception($"StateManager Unsubscribe: State name '{stateKey}' not found in State Bundle. Bundle ID:{bundleIDToUnsubscribeFrom} Bundle Name: {StateBundles[bundleIDToUnsubscribeFrom].BundleName}.");
             }
         }
         else
@@ -127,45 +127,24 @@ public partial class StateManager : AManager
             GD.PushWarning($"StateManager Unsubscribe: Bundle ID '{bundleIDToUnsubscribeFrom}' not found.");
         } 
     }
-    private int CreateBundle(string bundleTemplateKey, string bundleDefaultsName = "")
+    private StateBundleID CreateBundle(IStateBundleTemplate bundleToCreate, IBundleDefaultTemplate bundleDefaultTemplate = null)
     {
-        StateBundle new_bundle = new(bundleTemplateKey, nextID, TemplateLoader.BundleTemplates[bundleTemplateKey]);
-        nextID++;
-
-        if (bundleDefaultsName != "")
-        {
-            if (TemplateLoader.BundleDefaultTemplates.TryGetValue(bundleDefaultsName, out BundleDefaultsTemplate default_template))
-            {
-                if (default_template.BundleType == bundleTemplateKey)
-                {
-                    new_bundle.SetDefaultValues(default_template.DefaultValues);
-                }
-                else
-                {
-                    throw new Exception($"StateManager CreateBundle: Default template of wrong type. Type of template: '{default_template.BundleType}'; Type of bundle: '{bundleTemplateKey}'.");
-                }
-            }
-            else
-            {
-                throw new Exception($"StateManager CreateBundle: Default template name '{bundleDefaultsName}' not found.");
-            }
-
-        }
-
+        StateBundle new_bundle = new(bundleToCreate, nextID, bundleDefaultTemplate);
+        nextID.ID++;
         StateBundles.Add(new_bundle.BundleID, new_bundle);
         StateDictionary[new_bundle.BundleID] = [];
         CachedStates[new_bundle.BundleID] = [];
-        foreach (var (state_name, keeper) in new_bundle.Keepers)
+        foreach (var (state_key, keeper) in new_bundle.Keepers)
         {
-            State new_state = new(state_name, keeper.StateDefaultValue);
-            StateDictionary[new_bundle.BundleID][state_name] = new_state;
-            CachedStates[new_bundle.BundleID][state_name] = keeper.StateDefaultValue;
+            State new_state = new(state_key, keeper.StateDefaultValue);
+            StateDictionary[new_bundle.BundleID][state_key] = new_state;
+            CachedStates[new_bundle.BundleID][state_key] = keeper.StateDefaultValue;
         }
 
         return new_bundle.BundleID;
     }
 
-    public void DestroyBundle(int bundleIDToDestroy)
+    private void DestroyBundle(StateBundleID bundleIDToDestroy)
     {
         if (!StateBundles.ContainsKey(bundleIDToDestroy))
         {
@@ -177,7 +156,7 @@ public partial class StateManager : AManager
         CachedStates.Remove(bundleIDToDestroy);
     }
 
-    public void ClearState()
+    private void ClearState()
     {
         StateDictionary.Clear();
         StateBundles.Clear();
@@ -185,13 +164,15 @@ public partial class StateManager : AManager
     }
 
     // placeholder save/load functions to be iterated upon when the greater save/load system is created.
-    public void Save()
+    private void Save()
     {
 
     }
 
-    public void Load()
+    private void Load()
     {
 
     }
 }
+
+public record struct StateBundleID(int ID);

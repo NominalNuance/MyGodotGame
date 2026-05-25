@@ -2,12 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem;
 
-public class State(string newName, object newValue)
+public class State(IStateKey newKey, object newValue)
 {
-    public string Name { get; private set; } = newName;
+    public IStateKey Key { get; private set; } = newKey;
     public object CurrentState { get; private set; } = newValue;
     public object DefaultState { get; private set; } = newValue;
     public Type StateType { get; private set; } = newValue.GetType();
@@ -17,7 +18,7 @@ public class State(string newName, object newValue)
     {
         if (newValue != null && newValue.GetType() != StateType) 
         {
-            throw new Exception($"Cannot reassign state data type! Name of State: {Name}; Type of new value: {newValue.GetType().Name}; Type of state: {StateType.Name};");
+            throw new Exception($"Cannot reassign state data type! Name of State: {Key}; Type of new value: {newValue.GetType().Name}; Type of state: {StateType.Name};");
         }
 
         if (Equals(newValue, CurrentState)) 
@@ -25,7 +26,7 @@ public class State(string newName, object newValue)
             return this;
         }
 
-        State new_state = new(Name, newValue);
+        State new_state = new(Key, newValue);
         new_state.DefaultState = DefaultState;
         new_state.Listeners = Listeners;
         return new_state;

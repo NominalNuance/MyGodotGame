@@ -45,9 +45,14 @@ public interface IDependencyValue
     Type ValueType { get; }
 }
 
-public sealed record ConstantDependency<TValue>(TValue Value) : IDependencyValue
+public interface IConstantDependency : IDependencyValue
+{
+    object ValueObject { get; }
+}
+public sealed record ConstantDependency<TValue>(TValue Value) : IConstantDependency
 {
     public Type ValueType { get => typeof(TValue); }
+    public object ValueObject { get => Value!; }
 }
 
 public interface IStateDependency : IDependencyValue
