@@ -10,7 +10,7 @@ public abstract class StateLogicRule
     public abstract bool AcceptsDependency(IRuleDependencyKey keyToCheck);
     virtual public bool IsBidirectional { get; protected set; } = false;
     virtual public bool AcceptsAnyDependency { get; protected set; } = false;
-    public IStateKey Key { get; set; }
+    public IStateKey Key { get; set; } = null!;
 
 
     public void SetupDependency(IRuleDependencyKey dependencyKey, object dependency)
