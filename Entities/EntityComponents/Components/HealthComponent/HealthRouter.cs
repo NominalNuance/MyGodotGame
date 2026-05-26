@@ -11,12 +11,12 @@ public class HealthRouter(IRequestRouter newRequestRouter) : AComponentRouter, I
     public void CreateHealthBundle()
     {
         Mutation_State_CreateStateBundle temp = new("HealthBundle");
-        HealthBundleID = RequestRouter.RouteMutation(temp);
+        HealthBundleID = RequestRouter.RouteRequest(temp);
     }
 
     public void SetEntityHealth(int healthToSet)
     {
         Command_State_SetState temp = new(HealthBundleID, "CurrentHealth", healthToSet);
-        RequestRouter.RouteCommand(temp);
+        RequestRouter.RouteRequest(temp);
     }
 }

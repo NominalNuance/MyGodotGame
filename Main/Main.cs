@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using EroJRPG.Entities;
 using EroJRPG.Requests;
 using EroJRPG.Requests.Commands.UI;
-using EroJRPG.Scripts.StateManager;
+using EroJRPG.StateSystem;
 using EroJRPG.UI;
 using Godot;
 
@@ -32,14 +32,14 @@ public partial class Main : Node
         //This is actually a nice test script here since eventually we will want to
         //Open the main menu instead of the test menu on ready.
         Command_UIRoot_OpenMenu OpenMenuEvent = new(MenuID.TestMenu);
-        TheRequestRouter.RouteCommand(OpenMenuEvent);
+        TheRequestRouter.RouteRequest(OpenMenuEvent);
     }
 
     private T RegisterManager<T>(string managerNodeName, RequestDomain managerDomain) where T : AManager
     {
         T managerToRegister = GetNode<T>(managerNodeName);
         TheRequestRouter.RegisterHandler(managerDomain, managerToRegister.ProcessRequest);
-        managerToRegister.CommandReceived += TheRequestRouter.RouteCommand;
+        managerToRegister.CommandReceived += TheRequestRouter.RouteRequest;
         managerToRegister.RouterInterface = TheRequestRouter;
         return managerToRegister;
     }
@@ -51,7 +51,7 @@ public partial class Main : Node
         {
             TheRequestRouter.RegisterHandler(domain, managerToRegister.ProcessRequest);
         }
-        managerToRegister.CommandReceived += TheRequestRouter.RouteCommand;
+        managerToRegister.CommandReceived += TheRequestRouter.RouteRequest;
         managerToRegister.RouterInterface = TheRequestRouter;
         return managerToRegister;
     }

@@ -1,11 +1,8 @@
-using EroJRPG.Scripts.StateManager;
 using Godot;
 using System;
 
 public partial class StatCounter : Label
 {
-    private StateManager SM;
-
     private (string BundleName, string StateName) TargetState {get; set;}
     [Export] public string BundleName { get;  set;}
     [Export] public string StateName;

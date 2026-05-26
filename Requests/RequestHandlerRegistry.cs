@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EroJRPG.Requests.Queries.State;
 using Godot;
 
 namespace EroJRPG.Requests;
@@ -17,38 +18,38 @@ public class RequestHandlerRegistry(RequestDomain newDomain, string newOwnerName
         }
     }
 
-    public void RegisterCommand<CommandType>(Action<CommandType> handlerToRegister) where CommandType : ICommand
+    public void RegisterRequest<RequestType>(Action<RequestType> handlerToRegister) where RequestType : IRequest
     {
         object wrapper(IRequest requestToProcess)
         {
-            CommandType command_to_process = (CommandType)requestToProcess;
-            handlerToRegister(command_to_process);
+            RequestType request_to_process = (RequestType)requestToProcess;
+            handlerToRegister(request_to_process);
             return null;
         }
 
-        RequestToHandlerMap.Add(typeof(CommandType), wrapper);
+        RequestToHandlerMap.Add(typeof(RequestType), wrapper);
     }
 
-    public void RegisterQuery<QueryType, ResultType>(Func<QueryType, ResultType> handlerToRegister) where QueryType : IQuery<ResultType>
+    public void RegisterRequest<RequestType>(Func<RequestType, object> handlerToRegister) where RequestType : IRequest
     {
         object wrapper(IRequest requestToProcess)
         {
-            QueryType query_to_process = (QueryType)requestToProcess;
-            return handlerToRegister(query_to_process);
+            RequestType request_to_process = (RequestType)requestToProcess;
+            return handlerToRegister(request_to_process);
         }
 
-        RequestToHandlerMap.Add(typeof(QueryType), wrapper);
+        RequestToHandlerMap.Add(typeof(RequestType), wrapper);
     }
 
-    public void RegisterMutation<MutationType, ResultType>(Func<MutationType, ResultType> handlerToRegister) where MutationType : IMutation<ResultType>
+    public void RegisterRequest<RequestType, ResultType>(Func<RequestType, ResultType> handlerToRegister) where RequestType : IRequest<ResultType>
     {
-         object wrapper(IRequest requestToProcess)
+        object wrapper(IRequest requestToProcess)
         {
-            MutationType mutation_to_process = (MutationType)requestToProcess;
-            return handlerToRegister(mutation_to_process);
+            RequestType request_to_process = (RequestType)requestToProcess;
+            return handlerToRegister(request_to_process);
         }
 
-        RequestToHandlerMap.Add(typeof(MutationType), wrapper);
+        RequestToHandlerMap.Add(typeof(RequestType), wrapper);
     }
 
     public object ProcessRequest(IRequest requestToProcess)
@@ -57,15 +58,24 @@ public class RequestHandlerRegistry(RequestDomain newDomain, string newOwnerName
         if (ThisDomain != requestToProcess.Domain)
         {
             GD.PushError($"{OwnerName} received a request with the wrong domain! Domain of received request: {requestToProcess.Domain}");
+             return null;
         }
-        else if (RequestToHandlerMap.TryGetValue(requestToProcess.GetType(), out var handler))
+
+        Type request_type = requestToProcess.GetType();
+        if (RequestToHandlerMap.TryGetValue(request_type, out var handler))
         {
             return handler(requestToProcess);
         }
-        else
+
+        foreach (var (registeredType, interfaced_handler) in RequestToHandlerMap)
         {
-             GD.PushError($"{OwnerName} got an in-domain request with no handler for it! Request was {requestToProcess.GetType().Name}");
+            if (registeredType.IsAssignableFrom(request_type))
+            {
+                return interfaced_handler(requestToProcess);
+            }
         }
+
+        GD.PushError($"{OwnerName} got an in-domain request with no handler for it! Request was {requestToProcess.GetType().Name}");
         
         return null;
     }

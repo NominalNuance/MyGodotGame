@@ -10,9 +10,7 @@ public abstract class StateLogicRule
     public abstract bool AcceptsDependency(IRuleDependencyKey keyToCheck);
     virtual public bool IsBidirectional { get; protected set; } = false;
     virtual public bool AcceptsAnyDependency { get; protected set; } = false;
-
-    //keep an eye on this one if we really need to keep it
-    public IStateKey StateKey { get; set; }
+    public IStateKey Key { get; set; }
 
 
     public void SetupDependency(IRuleDependencyKey dependencyKey, object dependency)
@@ -42,22 +40,22 @@ public abstract class StateLogicRule
     protected object GetDependencyValue(IRuleDependencyKey key, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         object dependency = Dependencies[key];
-        if (dependency is StateKeeper keeper_dependency)
+        if (dependency is IStateKeeper keeper_dependency)
         {
-            if (newStateBundle.TryGetValue(keeper_dependency.StateKey, out object value))
+            if (newStateBundle.TryGetValue(keeper_dependency.Key, out object value))
             {
                 return value;
             }
             else
             {
-                return oldStateBundle[keeper_dependency.StateKey];
+                return oldStateBundle[keeper_dependency.Key];
             }
         }
         return dependency;
     }
     protected object GetState(Dictionary<IStateKey, object> stateBundle)
     {
-        return stateBundle[StateKey];
+        return stateBundle[Key];
     }
     public abstract object ProcessState(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle);
     public virtual object BidirectionalProcessState(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)

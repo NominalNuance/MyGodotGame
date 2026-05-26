@@ -5,27 +5,50 @@ using EroJRPG.StateSystem.StateLogicRules;
 using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem;
-public class StateKeeper
+public interface IStateKeeper
 {
-    public object StateDefaultValue { get; set; }
-    public Type StateDefaultType { get; set; }
-    public IStateKey StateKey { get; private set; }
+    public object StateDefaultValue { get; }
+    public Type StateDefaultType { get; }
+    public IStateKey Key { get; }
+    public List<object> Dependencies { get; }
+    public HashSet<IStateKeeper> DependentKeepers { get; }
+    public ImmutableHashSet<StateHandlerName> ActionHandlers { get;} 
+    public Dictionary<Type, StateLogicRule> StateLogicRules { get; } 
+    public bool HasRunThisAction { get; set; }
+    public bool DerivedState { get; set; }
+    public Dictionary<IStateKey, object> HandleAction(Dictionary<IStateKey, object> currentStateBundle, StateHandlerName handlerName, object Payload);
+    public object RunLogicRules(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle);
+    public object RunBidirectionalLogicRules(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle);
+    public Dictionary<IStateKey, object> NotifyDependents(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle);
+    public void AddDependency(IRuleDependencyKey dependencyKey, object dependency);
+    public void RegisterDependent(IStateKeeper dependentKeeper);
+    public void AssignNewDefault(object newDefaultValue);
+    public object INormalize(object valueToNormalize);
+    IState CreateState();
+}
+
+public class StateKeeper<SType> : IStateKeeper
+{
+    public SType StateDefaultValue { get; set; }
+    object IStateKeeper.StateDefaultValue { get => StateDefaultValue; }
+    public Type StateDefaultType { get => typeof(SType); }
+    public StateKey<SType> Key  { get; private set; }
+    IStateKey IStateKeeper.Key => Key;
     public List<object> Dependencies { get; private set; } = []; // What I depend on
-    public HashSet<StateKeeper> DependentKeepers { get; private set; } = []; // What depends on me
+    public HashSet<IStateKeeper> DependentKeepers { get; private set; } = []; // What depends on me
     public ImmutableHashSet<StateHandlerName> ActionHandlers { get; private set; } = [];
     public Dictionary<Type, StateLogicRule> StateLogicRules { get; private set; } = [];
     public bool HasRunThisAction { get; set; } = false;
     public bool DerivedState { get; set; }
-    public INormStatePolicy NormalizationPolicy;
 
-    public StateKeeper(IStateKey newStateKey, object newDefaultValue, IKeeperTemplate newKeeperTemplate, 
-    Type newStateDefaultType, INormStatePolicy newNormalizationPolicy, bool isDerived = false)
+    public INormStatePolicy<SType> NormalizationPolicy;
+
+    public StateKeeper(StateKey<SType> newStateKey, SType newDefaultValue, IKeeperTemplate newKeeperTemplate, INormStatePolicy<SType> newNormalizationPolicy)
     {
-        StateKey = newStateKey;
-        StateDefaultType = newStateDefaultType;
+        Key = newStateKey;
         NormalizationPolicy = newNormalizationPolicy;
-        StateDefaultValue = NormalizationPolicy.NormalizeObject(newDefaultValue);
-        DerivedState = isDerived;
+        StateDefaultValue = NormalizationPolicy.Normalize(newDefaultValue);
+        DerivedState = newKeeperTemplate.Derived;
         SetupKeeper(newKeeperTemplate);
 
         /*
@@ -43,16 +66,16 @@ public class StateKeeper
         object new_state;
         if (ActionHandlers.Contains(handlerName))
         {
-            new_state = StateActionHandlers.Handlers[handlerName].Invoke(currentStateBundle[StateKey], Payload);
+            new_state = StateActionHandlers.Handlers[handlerName].Invoke(currentStateBundle[Key], Payload);
             new_state = NormalizationPolicy.NormalizeObject(new_state);
         }
         else
         {
-            throw new Exception($"Error! {StateKey} has no handler for action type: {handlerName}");
+            throw new Exception($"Error! {Key} has no handler for action type: {handlerName}");
         }
-        Dictionary<IStateKey, object> new_state_bundle = new() { { StateKey, new_state } };
-        new_state_bundle[StateKey] = RunLogicRules(new_state_bundle, currentStateBundle);
-        if (!Equals(new_state_bundle[StateKey], currentStateBundle[StateKey]))
+        Dictionary<IStateKey, object> new_state_bundle = new() { { Key, new_state } };
+        new_state_bundle[Key] = RunLogicRules(new_state_bundle, currentStateBundle);
+        if (!Equals(new_state_bundle[Key], currentStateBundle[Key]))
         {
             new_state_bundle = NotifyDependents(new_state_bundle, currentStateBundle);
         }
@@ -65,7 +88,7 @@ public class StateKeeper
     }
     public object RunLogicRules(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        object new_state = currentStateBundle[StateKey];
+        object new_state = currentStateBundle[Key];
         foreach (var (_, state_logic_rule) in StateLogicRules)
         {
             new_state = state_logic_rule.ExecuteLogic(new_state, currentStateBundle, oldStateBundle);
@@ -74,7 +97,7 @@ public class StateKeeper
     }
     public object RunBidirectionalLogicRules(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        object new_state = oldStateBundle[StateKey];
+        object new_state = oldStateBundle[Key];
         foreach  (var (_, state_logic_rule) in StateLogicRules)
         {
             if (state_logic_rule.IsBidirectional)
@@ -84,7 +107,7 @@ public class StateKeeper
         }
         return NormalizationPolicy.NormalizeObject(new_state);
     }
-    private Dictionary<IStateKey, object> NotifyDependents(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
+    public Dictionary<IStateKey, object> NotifyDependents(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         if (HasRunThisAction)
         {
@@ -93,11 +116,11 @@ public class StateKeeper
 
         HasRunThisAction = true;
         Dictionary<IStateKey, object> new_state_bundle = currentStateBundle;
-        foreach (StateKeeper dependent_keeper in DependentKeepers)
+        foreach (IStateKeeper dependent_keeper in DependentKeepers)
         {
             if (!dependent_keeper.HasRunThisAction)
             {
-                new_state_bundle[dependent_keeper.StateKey] = dependent_keeper.RunBidirectionalLogicRules(new_state_bundle, oldStateBundle);
+                new_state_bundle[dependent_keeper.Key] = dependent_keeper.RunBidirectionalLogicRules(new_state_bundle, oldStateBundle);
                 new_state_bundle = dependent_keeper.NotifyDependents(new_state_bundle, oldStateBundle);
             }
         }
@@ -108,7 +131,7 @@ public class StateKeeper
     //Take a look at this some more
     public void AddDependency(IRuleDependencyKey dependencyKey, object dependency)
     {
-        if (dependency is StateKeeper keeper_dependency)
+        if (dependency is IStateKeeper keeper_dependency)
         {
             keeper_dependency.RegisterDependent(this);
         }
@@ -121,10 +144,10 @@ public class StateKeeper
         }
         else
         {
-            throw new Exception($"Error! {StateKey} tried to add a dependency key for a state rule that does not have that key! DependencyKey: {dependencyKey} | Type of rule {dependencyKey.RuleType}");
+            throw new Exception($"Error! {Key} tried to add a dependency key for a state rule that does not have that key! DependencyKey: {dependencyKey} | Type of rule {dependencyKey.RuleType}");
         }
     }
-    public void RegisterDependent(StateKeeper dependentKeeper)
+    public void RegisterDependent(IStateKeeper dependentKeeper)
     {
         DependentKeepers.Add(dependentKeeper);
     }
@@ -133,7 +156,7 @@ public class StateKeeper
         foreach (StateLogicRuleFactory ruleFactory in newLogicRules)
         {
             StateLogicRule new_rule = ruleFactory.CreateInstance();
-            new_rule.StateKey = StateKey;
+            new_rule.Key = Key;
             StateLogicRules.Add(ruleFactory.RuleType, new_rule);
         }
     }
@@ -145,6 +168,25 @@ public class StateKeeper
         {
             InitializeLogicRules(newKeeperTemplate.LogicRules);
         }
+    }
+
+    public void AssignNewDefault(object newDefaultValue)
+    {
+        StateDefaultValue = NormalizationPolicy.Normalize((SType)newDefaultValue);
+    }
+    public object INormalize(object valueToNormalize)
+    {
+        return Normalize((SType)valueToNormalize);
+    }
+
+    public SType Normalize(SType valueToNormalize)
+    {
+        return NormalizationPolicy.Normalize(valueToNormalize);
+    }
+
+    public IState CreateState()
+    {
+        return new State<SType>(Key, StateDefaultValue);
     }
 
 }

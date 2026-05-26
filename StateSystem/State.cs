@@ -6,27 +6,55 @@ using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem;
 
-public class State(IStateKey newKey, object newValue)
+public interface IState
 {
-    public IStateKey Key { get; private set; } = newKey;
-    public object CurrentState { get; private set; } = newValue;
-    public object DefaultState { get; private set; } = newValue;
-    public Type StateType { get; private set; } = newValue.GetType();
-    public ConditionalWeakTable<object, List<ListenerPayload>> Listeners = [];
+    public IStateKey Key { get; }
+    public object CurrentState { get; }
+    public object DefaultState { get; }
+    public Type StateType { get; }
+    public IState IUpdateState(object newValue);
+    public void EmitStateUpdate();
+    public void RemoveListener(object listener);  
+    public void IAddListener(object listener, Action<object> listenerFunction, Func<object, bool> conditional = null);
+}
 
-    public State UpdateState(object newValue) 
+public class State<SType>(StateKey<SType> newKey, SType newValue) : IState
+{
+    public record struct ListenerPayload(Action<SType> ListenerFunction, Func<SType, bool> Conditional)
+    {
+        public Func<SType, bool> Conditional { get; private set; } = Conditional ?? ((obj) => true);
+
+    }
+    public StateKey<SType> Key { get; private set; } = newKey;
+    public SType CurrentState { get; private set; } = newValue;
+    public SType DefaultState { get; private set; } = newValue;
+    public Type StateType { get => typeof(SType); }
+
+    object IState.CurrentState => CurrentState;
+
+    object IState.DefaultState => DefaultState;
+
+    IStateKey IState.Key => Key;
+
+    private ConditionalWeakTable<object, List<ListenerPayload>> Listeners = [];
+
+    public IState IUpdateState(object newValue)
     {
         if (newValue != null && newValue.GetType() != StateType) 
         {
             throw new Exception($"Cannot reassign state data type! Name of State: {Key}; Type of new value: {newValue.GetType().Name}; Type of state: {StateType.Name};");
         }
+        return UpdateState((SType)newValue);
+    }
+    public State<SType> UpdateState(SType newValue) 
+    {
 
         if (Equals(newValue, CurrentState)) 
         {
             return this;
         }
 
-        State new_state = new(Key, newValue);
+        State<SType> new_state = new(Key, (SType)newValue);
         new_state.DefaultState = DefaultState;
         new_state.Listeners = Listeners;
         return new_state;
@@ -47,11 +75,21 @@ public class State(IStateKey newKey, object newValue)
         }
     }
 
-    public void AddListener(object listener, Action<object> listenerFunction, Func<object, bool> conditional = null)
+    public void IAddListener(object listener, Action<object> listenerFunction, Func<object, bool> conditional = null)
+    {
+        conditional ??= _ => true;
+        AddListener
+        (
+            listener,
+            typedValue => listenerFunction(typedValue),
+            typedValue => conditional(typedValue)
+        );
+    }
+    public void AddListener(object listener, Action<SType> listenerFunction, Func<SType, bool> conditional = null)
     {
         // ??= is the Null-Coalescing Assignment Operator. It checks if the left side is null
         // If so, it assigns to that null value the value on the right side.
-        // conditional ??= (object obj) => true;
+        conditional ??= _ => true;
 
         //If the listener is not in the Listener Dictionary, then we add them to the dictionary with a new and empty payload_list
         if (!Listeners.TryGetValue(listener, out var payload_list))
@@ -61,11 +99,12 @@ public class State(IStateKey newKey, object newValue)
         }
 
         //TODO: check to make sure the current listenerFunction and conditional do not already exist
-        payload_list.Add(new ListenerPayload(listenerFunction, conditional));
+        ListenerPayload payload = new(listenerFunction, conditional);
+        payload_list.Add(payload);
 
-        if (conditional(CurrentState))
+        if (payload.Conditional(CurrentState))
         {
-            listenerFunction(CurrentState);
+            payload.ListenerFunction(CurrentState);
         }
 
     }
@@ -77,10 +116,4 @@ public class State(IStateKey newKey, object newValue)
     {
         Listeners.Remove(listener);
     }
-}
-
-public record struct ListenerPayload(Action<object> ListenerFunction, Func<object, bool> Conditional)
-{
-    public Func<object, bool> Conditional { get; private set; } = Conditional ?? ((obj) => true);
-
 }

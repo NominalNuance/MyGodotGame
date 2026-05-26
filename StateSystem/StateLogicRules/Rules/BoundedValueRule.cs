@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using EroJRPG.StateSystem.TemplateDirectory;
 
-namespace EroJRPG.StateSystem.StateLogicRules;
+namespace EroJRPG.StateSystem.StateLogicRules.Rules;
 
 public class BoundedValueRule : StateLogicRule
 {

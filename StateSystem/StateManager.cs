@@ -6,6 +6,7 @@ using EroJRPG.Main;
 using EroJRPG.Requests.Mutations;
 using EroJRPG.Requests.Commands.State;
 using EroJRPG.StateSystem.TemplateDirectory;
+using EroJRPG.Requests.Queries.State;
 
 namespace EroJRPG.StateSystem;
 
@@ -20,7 +21,7 @@ namespace EroJRPG.StateSystem;
 
 public partial class StateManager : AManager
 {
-    private Dictionary<StateBundleID, Dictionary<IStateKey, State>> StateDictionary = [];
+    private Dictionary<StateBundleID, Dictionary<IStateKey, IState>> StateDictionary = [];
     private Dictionary<StateBundleID, Dictionary<IStateKey, object>> CachedStates = [];
     private Dictionary<StateBundleID, StateBundle> StateBundles = [];
     private StateBundleID nextID = new(0);
@@ -28,8 +29,11 @@ public partial class StateManager : AManager
 
     protected override void SetupHandlerMap()
     {   
-        RegisterMutation<Mutation_State_CreateStateBundle, StateBundleID>(HandleCreateStateBundle);
-        RegisterCommand<Command_State_SendAction>(HandleSetState);
+        RegisterRequest<Mutation_State_CreateStateBundle, StateBundleID>(HandleCreateStateBundle);
+
+        RegisterRequest<ICommand_State_SendAction>(HandleSetState);
+
+        RegisterRequest<IQuery_State_Get>(HandleGetState);
     }
 
     private StateBundleID HandleCreateStateBundle(Mutation_State_CreateStateBundle currentMutation)
@@ -37,15 +41,30 @@ public partial class StateManager : AManager
         return CreateBundle(currentMutation.BundleToCreate, currentMutation.DefaultsToAssign);
     }
 
-    private void HandleSetState(Command_State_SendAction currentCommand)
+    private void HandleSetState(ICommand_State_SendAction currentCommand)
     {
         Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.StateAction, currentCommand.Payload);
     }
+
+    private object HandleGetState(IQuery_State_Get currentQuery)
+    {
+            object result = GetState( currentQuery.TargetBundleID, currentQuery.TargetStateKey);
+
+        if (result != null && result.GetType() != currentQuery.ReturnType)
+        {
+            throw new Exception(
+                $"StateManager HandleGetState: Query expected '{currentQuery.TargetStateKey}' " +
+                $"to be '{currentQuery.ReturnType.Name}', but actual value was '{result.GetType().Name}'."
+            );
+        }
+
+        return result;
+    }
     private object GetState(StateBundleID bundleIDToGet, IStateKey stateKey)
     {
-        if (StateDictionary.TryGetValue(bundleIDToGet, out Dictionary<IStateKey, State> bundle_state_dict))
+        if (StateDictionary.TryGetValue(bundleIDToGet, out Dictionary<IStateKey, IState> bundle_state_dict))
         {
-            if(bundle_state_dict.TryGetValue(stateKey, out State state))
+            if(bundle_state_dict.TryGetValue(stateKey, out IState state))
             {
                 return state.CurrentState;
             }
@@ -62,15 +81,15 @@ public partial class StateManager : AManager
 
     private void Dispatch(StateBundleID bundleIDToDispatchTo, IStateKey stateKey, StateHandlerName handlerName, object Payload)
     {
-        if (StateDictionary.TryGetValue(bundleIDToDispatchTo, out Dictionary<IStateKey, State> bundle_state_dict))
+        if (StateDictionary.TryGetValue(bundleIDToDispatchTo, out Dictionary<IStateKey, IState> bundle_state_dict))
         {
             if(bundle_state_dict.ContainsKey(stateKey))
             {
                 Dictionary<IStateKey, object> current_bundle = StateBundles[bundleIDToDispatchTo].Dispatch(CachedStates[bundleIDToDispatchTo], stateKey, handlerName, Payload);
                 foreach (var (modified_state_name, modified_state) in current_bundle)
                 {
-                    State current_state = bundle_state_dict[modified_state_name];
-                    bundle_state_dict[modified_state_name] = current_state.UpdateState(modified_state);
+                    IState current_state = bundle_state_dict[modified_state_name];
+                    bundle_state_dict[modified_state_name] = current_state.IUpdateState(modified_state);
                     CachedStates[bundleIDToDispatchTo][modified_state_name] = modified_state;
                 }
                 foreach (var (modified_state_name, _) in current_bundle)
@@ -92,11 +111,11 @@ public partial class StateManager : AManager
 
     private void Subscribe(StateBundleID bundleIDToSubscribeTo, IStateKey stateKey, object subscriber, Action<object> callbackFunction, Func<object, bool> conditional = null)
     {
-        if (StateDictionary.TryGetValue(bundleIDToSubscribeTo, out Dictionary<IStateKey, State> bundle_state_dict))
+        if (StateDictionary.TryGetValue(bundleIDToSubscribeTo, out Dictionary<IStateKey, IState> bundle_state_dict))
         {
-            if(bundle_state_dict.TryGetValue(stateKey, out State state))
+            if(bundle_state_dict.TryGetValue(stateKey, out IState state))
             {
-                state.AddListener(subscriber, callbackFunction, conditional);
+                state.IAddListener(subscriber, callbackFunction, conditional);
             }
             else
             {
@@ -111,9 +130,9 @@ public partial class StateManager : AManager
 
     private void Unsubscribe(StateBundleID bundleIDToUnsubscribeFrom, IStateKey stateKey, object subscriber)
     {
-       if (StateDictionary.TryGetValue(bundleIDToUnsubscribeFrom, out Dictionary<IStateKey, State> bundle_state_dict))
+       if (StateDictionary.TryGetValue(bundleIDToUnsubscribeFrom, out Dictionary<IStateKey, IState> bundle_state_dict))
         {
-            if(bundle_state_dict.TryGetValue(stateKey, out State state))
+            if(bundle_state_dict.TryGetValue(stateKey, out IState state))
             {
                 state.RemoveListener(subscriber);
             }
@@ -136,7 +155,7 @@ public partial class StateManager : AManager
         CachedStates[new_bundle.BundleID] = [];
         foreach (var (state_key, keeper) in new_bundle.Keepers)
         {
-            State new_state = new(state_key, keeper.StateDefaultValue);
+            IState new_state = keeper.CreateState();
             StateDictionary[new_bundle.BundleID][state_key] = new_state;
             CachedStates[new_bundle.BundleID][state_key] = keeper.StateDefaultValue;
         }

@@ -12,6 +12,7 @@ public interface IStateDefinition
     public Type ValueType { get; }
     public IReadOnlyList<RuleDependencyTemplate> Dependencies { get;}
     public INormStatePolicy NormPolicyObject { get; }
+    IStateKeeper CreateKeeper();
 }
 
 public sealed record StateDefinition<TValue>
@@ -28,6 +29,11 @@ public sealed record StateDefinition<TValue>
     public Type ValueType { get => typeof(TValue);}
     public INormStatePolicy NormPolicyObject { get => TypedNormPolicy; }
     IStateKey IStateDefinition.Key => Key;
+
+    public IStateKeeper CreateKeeper()
+    {
+        return new StateKeeper<TValue>(Key, DefaultValue, KeeperTemplate, TypedNormPolicy);
+    }
 }
 
 public record struct RuleDependencyTemplate

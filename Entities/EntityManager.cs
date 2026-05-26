@@ -18,7 +18,7 @@ public partial class EntityManager : AManager
     public override void _Ready()
     {
         base._Ready();
-        _ = RouterInterface.RouteMutation(new Mutation_Entity_CreateEntity(new EntityConfigTest()));
+        _ = RouterInterface.RouteRequest(new Mutation_Entity_CreateEntity(new EntityConfigTest()));
         
     }
 
@@ -69,7 +69,7 @@ public partial class EntityManager : AManager
 
     protected override void SetupHandlerMap()
     {   
-        RegisterMutation<Mutation_Entity_CreateEntity, EntityID>(HandleCreateEntity);
+        RegisterRequest<Mutation_Entity_CreateEntity, EntityID>(HandleCreateEntity);
     }
 
     private EntityID HandleCreateEntity(Mutation_Entity_CreateEntity currentMutation)

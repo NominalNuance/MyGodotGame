@@ -33,18 +33,45 @@ public abstract partial class AManager : Node
         return RequestRegistry.ProcessRequest(requestToProcess);
     }
 
+    // Deprecated. To be removed soon in favor of the generic RegisterRequest functions
+    /// All future handler registration should use those functions instead.
+    /// 
+    /// 
+    /// 
     protected void RegisterCommand<CommandType>(Action<CommandType> handlerToRegister) where CommandType : ICommand
     {
-        RequestRegistry.RegisterCommand(handlerToRegister);
+        RequestRegistry.RegisterRequest(handlerToRegister);
+        GD.PushWarning($"AManager specific request registration commands are deprecated. Use generic ones instead. Manager source: {GetType().Name}");
     }
 
     protected void RegisterQuery<QueryType, ResultType>(Func<QueryType, ResultType> handlerToRegister) where QueryType : IQuery<ResultType>
     {
-        RequestRegistry.RegisterQuery(handlerToRegister);
+        RequestRegistry.RegisterRequest(handlerToRegister);
+        GD.PushWarning($"AManager specific request registration commands are deprecated. Use generic ones instead. Manager source: {GetType().Name}");
     }
 
     protected void RegisterMutation<MutationType, ResultType>(Func<MutationType, ResultType> handlerToRegister) where MutationType : IMutation<ResultType>
     {
-        RequestRegistry.RegisterMutation(handlerToRegister);
+        RequestRegistry.RegisterRequest(handlerToRegister);
+        GD.PushWarning($"AManager specific request registration commands are deprecated. Use generic ones instead. Manager source: {GetType().Name}");
+    }
+
+    ///
+    /// 
+    /// 
+
+    protected void RegisterRequest<RequestType>(Action<RequestType> handlerToRegister) where RequestType : IRequest
+    {
+        RequestRegistry.RegisterRequest(handlerToRegister);
+    }
+
+    protected void RegisterRequest<RequestType>(Func<RequestType, object> handlerToRegister) where RequestType : IRequest
+    {
+        RequestRegistry.RegisterRequest(handlerToRegister);
+    }
+
+    protected void RegisterRequest<RequestType, ResultType>(Func<RequestType, ResultType> handlerToRegister) where RequestType : IRequest<ResultType>
+    {
+        RequestRegistry.RegisterRequest(handlerToRegister);
     }
 }

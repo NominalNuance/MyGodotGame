@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using EroJRPG.StateSystem.StateLogicRules;
+using EroJRPG.StateSystem.StateLogicRules.Rules;
 
 namespace EroJRPG.StateSystem.TemplateDirectory;
 public interface IKeeperTemplate

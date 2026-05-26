@@ -9,7 +9,7 @@ public class StateBundle
 {
     public string BundleName { get; private set; }
     public StateBundleID BundleID { get; private set; }
-    public Dictionary<IStateKey, StateKeeper> Keepers { get; private set; } = [];
+    public Dictionary<IStateKey, IStateKeeper> Keepers { get; private set; } = [];
 
     public StateBundle (IStateBundleTemplate newBundleTemplate, StateBundleID newBundleID, IBundleDefaultTemplate bundleDefaultTemplate)
     {
@@ -34,18 +34,7 @@ public class StateBundle
         Dictionary<IStateKey, IReadOnlyList<RuleDependencyTemplate>> dependency_dictionary = [];
         foreach (IStateDefinition state_definition in newBundleTemplate.States)
         {
-            if (state_definition.KeeperTemplate.Derived)
-            {
-                Keepers.Add(state_definition.Key, new StateKeeper(state_definition.Key, state_definition.DefaultValueObject, 
-                state_definition.KeeperTemplate, state_definition.ValueType, state_definition.NormPolicyObject, true));
-            }
-            else
-            {
-                Keepers.Add(state_definition.Key, new StateKeeper(state_definition.Key, state_definition.DefaultValueObject, 
-                state_definition.KeeperTemplate, state_definition.ValueType, state_definition.NormPolicyObject));
-            }
-
-
+            Keepers.Add(state_definition.Key, state_definition.CreateKeeper());
             if (state_definition.Dependencies != null && state_definition.Dependencies.Count > 0)
             {
                 dependency_dictionary.Add(state_definition.Key, state_definition.Dependencies);
@@ -70,7 +59,7 @@ public class StateBundle
     {
         if (dependencyTemplate.Value is IStateDependency state_depedency_defintion)
         {
-            if (Keepers.TryGetValue(state_depedency_defintion.StateKey, out StateKeeper keeper_dep))
+            if (Keepers.TryGetValue(state_depedency_defintion.StateKey, out IStateKeeper keeper_dep))
             {
                 Keepers[targetStateKey].AddDependency(dependencyTemplate.DependencyKey, keeper_dep);
             }
@@ -103,10 +92,10 @@ public class StateBundle
             int previous_count = pending.Count;
             foreach (IStateKey state_key in pending.ToList())
             {
-                StateKeeper current_keeper = Keepers[state_key];
+                IStateKeeper current_keeper = Keepers[state_key];
                 bool ready_to_process = current_keeper.Dependencies.All(dependency =>
                 {
-                    return !(dependency is StateKeeper dependency_keeper && Keepers.ContainsKey(dependency_keeper.StateKey) && !initialized.Contains(dependency_keeper.StateKey));
+                    return !(dependency is IStateKeeper dependency_keeper && Keepers.ContainsKey(dependency_keeper.Key) && !initialized.Contains(dependency_keeper.Key));
                 });
                 if (ready_to_process)
                 {
@@ -115,7 +104,7 @@ public class StateBundle
                     object newValue = current_keeper.RunLogicRules(temp, state_values);
                     //newValue = current_keeper.RunBidirectionalLogicRules(temp, state_values);
 
-                    current_keeper.StateDefaultValue = newValue;
+                    current_keeper.AssignNewDefault(newValue);
                     state_values[state_key] = newValue;
 
                     initialized.Add(state_key);
@@ -143,9 +132,9 @@ public class StateBundle
 
         foreach (var (state_key, default_value) in bundleDefaultTemplate.DefaultValues)
         {
-            if (Keepers.TryGetValue(state_key, out StateKeeper current_keeper))
+            if (Keepers.TryGetValue(state_key, out IStateKeeper current_keeper))
             {
-                current_keeper.StateDefaultValue = current_keeper.NormalizationPolicy.NormalizeObject(default_value);
+                current_keeper.AssignNewDefault(default_value);
             }
             else
             {

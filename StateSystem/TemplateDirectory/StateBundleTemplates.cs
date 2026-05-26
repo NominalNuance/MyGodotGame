@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using EroJRPG.StateSystem.StateLogicRules;
+using EroJRPG.StateSystem.StateLogicRules.Rules;
 
 namespace EroJRPG.StateSystem.TemplateDirectory;
 public interface IStateBundleTemplate
