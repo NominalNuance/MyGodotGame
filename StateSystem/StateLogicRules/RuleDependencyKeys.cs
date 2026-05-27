@@ -8,7 +8,7 @@ public interface IRuleDependencyKey
     public Type RuleType { get; }
 }
 
-public sealed class RuleDependencyKey<TRule> : IRuleDependencyKey where TRule : StateLogicRule
+public sealed class RuleDependencyKey<TRule> : IRuleDependencyKey where TRule : IStateLogicRule
 {
     public string DebugName { get; }
     public Type RuleType { get => typeof(TRule); }

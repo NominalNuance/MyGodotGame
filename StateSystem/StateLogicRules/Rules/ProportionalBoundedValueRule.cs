@@ -1,32 +1,27 @@
 using System;
 using System.Collections.Generic;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem.StateLogicRules;
 
-public class ProportionalBoundedValueRule : StateLogicRule
+public class ProportionalBoundedValueRule : StateLogicRule<double>
 {
-    override public List<string> DependencyKeys { get; protected set; } =
-    [
-        "maxBound",
-		"minBound"
-    ];
+    public static readonly RuleDependencyKey<ProportionalBoundedValueRule> MaxBound = new("MaxBound");
+    public static readonly RuleDependencyKey<ProportionalBoundedValueRule> MinBound = new("MinBound");
     override public bool IsBidirectional { get; protected set; } = true;
+    public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == MaxBound || keyToCheck == MinBound;
         
-    public override object ProcessState(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        double d_current_state = Convert.ToDouble(currentState);
-        double d_max_bound = Convert.ToDouble(GetDependencyValue("maxBound", newStateBundle, oldStateBundle));
-        double d_min_bound = Convert.ToDouble(GetDependencyValue("minBound", newStateBundle, oldStateBundle));
-        d_current_state = Math.Clamp(d_current_state, d_min_bound, d_max_bound);
-        return Convert.ChangeType(d_current_state, currentState.GetType());
+        double max_bound = GetDependencyValue<double>(MaxBound, newStateBundle, oldStateBundle);
+        double min_bound = GetDependencyValue<double>(MinBound, newStateBundle, oldStateBundle);
+        return Math.Clamp(currentState, min_bound, max_bound);
     }
 
-    public override object BidirectionalProcessState(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    protected override double BidirectionalProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     { 
-        double d_current_state = Convert.ToDouble(currentState);
-        double d_max_bound = Convert.ToDouble(GetDependencyValue("maxBound", newStateBundle, oldStateBundle));
-        double d_old_max_bound = Convert.ToDouble(GetDependencyValue("maxBound", oldStateBundle, oldStateBundle));
-        d_current_state *= d_max_bound / d_old_max_bound;
-        return Convert.ChangeType(d_current_state, currentState.GetType());
+        double max_bound = GetDependencyValue<double>(MaxBound, newStateBundle, oldStateBundle);
+        double old_max_bound = GetDependencyValue<double>(MinBound, oldStateBundle, oldStateBundle);
+        return currentState * (max_bound / old_max_bound);
     }
 }

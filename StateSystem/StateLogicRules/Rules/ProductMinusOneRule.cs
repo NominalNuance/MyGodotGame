@@ -1,20 +1,19 @@
 using System;
 using System.Collections.Generic;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem.StateLogicRules;
 
-public class ProductMinusOneRule : StateLogicRule
+public class ProductMinusOneRule : StateLogicRule<double>
 {
-    override public List<string> DependencyKeys { get; protected set; } =
-    [
-        "minusOne",
-        "other"
-    ];
-    public override object ProcessState(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    public static readonly RuleDependencyKey<ProductMinusOneRule> MinusOne = new("MinusOne");
+    public static readonly RuleDependencyKey<ProductMinusOneRule> Other = new("Other");
+    override public bool IsBidirectional { get; protected set; } = true;
+    public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == MinusOne || keyToCheck == Other;
+    protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        double d_minus_one = Convert.ToDouble(GetDependencyValue("minusOne", newStateBundle, oldStateBundle));
-        double d_other = Convert.ToDouble(GetDependencyValue("other", newStateBundle, oldStateBundle));
-        double product = (d_minus_one - 1d) * d_other;
-        return Convert.ChangeType(product, currentState.GetType());
+        double minus_one = GetDependencyValue<double>(MinusOne, newStateBundle, oldStateBundle);
+        double other = GetDependencyValue<double>(Other, newStateBundle, oldStateBundle);
+        return (minus_one - 1d) * other;
     }
 }

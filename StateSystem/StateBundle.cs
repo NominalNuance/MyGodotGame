@@ -32,8 +32,30 @@ public class StateBundle
     private void InitializeKeepers(IStateBundleTemplate newBundleTemplate)
     {
         Dictionary<IStateKey, IReadOnlyList<RuleDependencyTemplate>> dependency_dictionary = [];
+        HashSet<IStateKey> seen = [];
         foreach (IStateDefinition state_definition in newBundleTemplate.States)
         {
+            if (!seen.Add(state_definition.Key))
+            {
+                throw new Exception($"Duplicate state key '{state_definition.Key}' in bundle '{BundleName}'.");
+            }
+            if (!state_definition.KeeperTemplate.AcceptsValueType(state_definition.ValueType))
+            {
+                throw new Exception
+                (
+                    $"State '{state_definition.Key}' has value type '{state_definition.ValueType.Name}', " +
+                    $"but keeper '{state_definition.KeeperTemplate.GetType().Name}' does not accept it."
+                );
+            }
+            if (state_definition.NormPolicyObject.ValueType != state_definition.ValueType)
+            {
+                throw new Exception
+                (
+                    $"State '{state_definition.Key}' has norm policy for '{state_definition.NormPolicyObject.ValueType.Name}', " +
+                    $"but state type is '{state_definition.ValueType.Name}'."
+                );
+            }
+
             Keepers.Add(state_definition.Key, state_definition.CreateKeeper());
             if (state_definition.Dependencies != null && state_definition.Dependencies.Count > 0)
             {

@@ -6,19 +6,26 @@ namespace EroJRPG.StateSystem.StateLogicRules;
 public sealed class StateLogicRuleFactory 
 {
     public Type RuleType { get; }
-    private readonly Func<StateLogicRule> Factory;
-    private StateLogicRuleFactory(Type newRuleType, Func<StateLogicRule> newFactory)
+    public Type StateType { get; }
+    private readonly Func<IStateLogicRule> Factory;
+    private StateLogicRuleFactory(Type newRuleType, Type newStateType, Func<IStateLogicRule> newFactory)
     {
         RuleType = newRuleType;
+        StateType = newStateType;
         Factory = newFactory;
     }
 
-    public static StateLogicRuleFactory Create<RuleType>() where RuleType : StateLogicRule, new()
+    public static StateLogicRuleFactory Create<TRule, TState>() where TRule : StateLogicRule<TState>, new()
     {
-        return new StateLogicRuleFactory(typeof(RuleType), () => new RuleType());
+        return new StateLogicRuleFactory
+        (
+            typeof(TRule),
+            typeof(TState),
+            () => new TRule()
+        );
     }
 
-    public StateLogicRule CreateInstance()
+    public IStateLogicRule CreateInstance()
     {
         return Factory();
     }

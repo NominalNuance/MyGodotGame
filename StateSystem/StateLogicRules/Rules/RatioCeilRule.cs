@@ -1,23 +1,21 @@
 using System;
 using System.Collections.Generic;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 
 namespace EroJRPG.StateSystem.StateLogicRules;
 
-public class RatioCeilRule : StateLogicRule
+public class RatioCeilRule : StateLogicRule<double>
 {
-        override public List<string> DependencyKeys { get; protected set; } =
-    [
-        "numerator",
-		"denominator"
-    ];
+    public static readonly RuleDependencyKey<RatioRule> Numerator = new("Numerator");
+    public static readonly RuleDependencyKey<RatioRule> Denominator = new("Denominator");
     override public bool IsBidirectional { get; protected set; } = true;
+    public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == Numerator || keyToCheck == Denominator;
         
-    public override object ProcessState(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        double d_numerator = Convert.ToDouble(GetDependencyValue("numerator", newStateBundle, oldStateBundle));
-        double d_denominator = Convert.ToDouble(GetDependencyValue("denominator", newStateBundle, oldStateBundle));
-        double quotient = Math.Ceiling(d_numerator/d_denominator);
-        return Convert.ChangeType(quotient, currentState.GetType());
+        double numerator = GetDependencyValue<double>(Numerator, newStateBundle, oldStateBundle);
+        double denominator = GetDependencyValue<double>(Denominator, newStateBundle, oldStateBundle);
+        return Math.Ceiling(numerator/denominator);
     }
 }

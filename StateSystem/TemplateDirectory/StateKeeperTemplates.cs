@@ -85,7 +85,7 @@ public class BoundedKeeper : ATypedKeeperTemplate<double>
     ];
     public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<BoundedValueRule>()
+        StateLogicRuleFactory.Create<BoundedValueRule, double>()
     ];
     public override bool Derived {get;} = false;
 }
@@ -100,7 +100,7 @@ public class ProportionalBoundedKeeper : ATypedKeeperTemplate<double>
     ];
     public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<ProportionalBoundedValueRule>()
+        StateLogicRuleFactory.Create<ProportionalBoundedValueRule, double>()
     ];
     public override bool Derived {get;} = false;
 }
@@ -110,7 +110,7 @@ public class ProductKeeper : ATypedKeeperTemplate<double>
     public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
     public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<ProductBoundRule>()
+        StateLogicRuleFactory.Create<ProductBoundRule, double>()
     ];
     public override bool Derived {get;} = true;
 }
@@ -120,7 +120,7 @@ public class RatioKeeper : ATypedKeeperTemplate<double>
     public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
     public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<RatioRule>()
+        StateLogicRuleFactory.Create<RatioRule, double>()
     ];
     public override bool Derived {get;} = true;
 }
@@ -130,7 +130,7 @@ public class RatioCeilKeeper : ATypedKeeperTemplate<double>
     public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
     public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<RatioCeilRule>()
+        StateLogicRuleFactory.Create<RatioCeilRule, double>()
     ];
     public override bool Derived {get;} = true;
 }
@@ -140,7 +140,7 @@ public class RatioFloorKeeper : ATypedKeeperTemplate<double>
     public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
     public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<RatioFloorRule>()
+        StateLogicRuleFactory.Create<RatioFloorRule, double>()
     ];
     public override bool Derived {get;} = true;
 }

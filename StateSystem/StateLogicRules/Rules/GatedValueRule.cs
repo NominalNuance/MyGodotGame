@@ -4,19 +4,18 @@ using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem.StateLogicRules.Rules;
 
-public class GatedValueRule : StateLogicRule
+public class GatedValueRule : StateLogicRule<double>
 {
     public static readonly RuleDependencyKey<BoundedValueRule> Gate = new("Gate");
     public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == Gate;
-    public override object ProcessState(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
+    protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
-        double d_current_state = Convert.ToDouble(currentState);
-        double d_old_state = Convert.ToDouble(oldStateBundle[StateKey]);
-        double d_gate = Convert.ToDouble(GetDependencyValue(Gate, newStateBundle, oldStateBundle));
-        if (d_current_state < d_gate && d_old_state > d_gate)
+        double old_state = Convert.ToDouble(oldStateBundle[Key]);
+        double gate = GetDependencyValue<double>(Gate, newStateBundle, oldStateBundle);
+        if (currentState < gate && old_state > gate)
         {
-            d_current_state = d_gate;
+            return gate;
         }
-        return d_current_state;
+        return currentState;
     }
 }

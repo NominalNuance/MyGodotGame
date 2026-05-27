@@ -4,12 +4,24 @@ using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem.StateLogicRules;
 
-public abstract class StateLogicRule
+public interface IStateLogicRule
 {
-    public Dictionary<IRuleDependencyKey, object> Dependencies { get; protected set; } = [];
+    public bool AcceptsDependency(IRuleDependencyKey keyToCheck);
+    public bool IsBidirectional { get; }
+    Type RuleType { get; }
+    Type StateType { get; }
+    public IStateKey Key { get; set; }
+    public void SetupDependency(IRuleDependencyKey dependencyKey, object dependency);
+    public object ExecuteLogic(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle, bool bidirectionalTrigger = false);
+}
+
+public abstract class StateLogicRule<Stype> : IStateLogicRule
+{
+    public Type RuleType { get => GetType(); }
+    public Type StateType { get => typeof(Stype); }
+    protected Dictionary<IRuleDependencyKey, object> Dependencies { get; set; } = [];
     public abstract bool AcceptsDependency(IRuleDependencyKey keyToCheck);
     virtual public bool IsBidirectional { get; protected set; } = false;
-    virtual public bool AcceptsAnyDependency { get; protected set; } = false;
     public IStateKey Key { get; set; } = null!;
 
 
@@ -19,46 +31,61 @@ public abstract class StateLogicRule
     }
     public object ExecuteLogic(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle, bool bidirectionalTrigger = false)
     {
-        /*if (DependencyKeys.Count == 0)
+        if (currentState is not Stype styped_current_state)
         {
-            throw new Exception($"StateLogicRule ExecuteLogic: No dependency keys assigned for this rule for the state `{StateName}`");
-        }*/
+            throw new Exception(
+                $"Rule '{GetType().Name}' expected state type '{typeof(Stype).Name}', " +
+                $"but got '{currentState?.GetType().Name ?? "null"}'."
+            );
+        }
 
-        object new_state;
-        if (bidirectionalTrigger)
+        Stype result = bidirectionalTrigger 
+        ? BidirectionalProcessState(styped_current_state, newStateBundle, oldStateBundle) 
+        : ProcessState(styped_current_state, newStateBundle, oldStateBundle);
+
+        return result!;
+    }
+
+    protected DType GetDependencyValue<DType>(IRuleDependencyKey key, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
+    {
+        object dependency = Dependencies[key];
+        object value;
+        if (dependency is IStateKeeper keeper_dependency)
         {
-            new_state = BidirectionalProcessState(currentState, newStateBundle, oldStateBundle);
+            if (!newStateBundle.TryGetValue(keeper_dependency.Key, out value))
+            {
+                value = oldStateBundle[keeper_dependency.Key];
+            }
         }
         else
         {
-            new_state = ProcessState(currentState, newStateBundle, oldStateBundle);
+            value = dependency;
         }
-
-        return new_state;
-    }
-
-    protected object GetDependencyValue(IRuleDependencyKey key, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
-    {
-        object dependency = Dependencies[key];
-        if (dependency is IStateKeeper keeper_dependency)
+         if (value is not DType typedValue)
         {
-            if (newStateBundle.TryGetValue(keeper_dependency.Key, out object value))
-            {
-                return value;
-            }
-            else
-            {
-                return oldStateBundle[keeper_dependency.Key];
-            }
+            throw new Exception(
+                $"Rule '{GetType().Name}' dependency '{key}' expected type " +
+                $"'{typeof(DType).Name}', but got '{value?.GetType().Name ?? "null"}'."
+            );
         }
-        return dependency;
+        return typedValue;
     }
-    protected object GetState(Dictionary<IStateKey, object> stateBundle)
+    protected Stype GetState(Dictionary<IStateKey, object> stateBundle)
     {
-        return stateBundle[Key];
+        object value = stateBundle[Key];
+
+        if (value is not Stype styped_state)
+        {
+            throw new Exception
+            (
+                $"Rule '{GetType().Name}' expected own state '{Key}' to be " +
+                $"'{typeof(Stype).Name}', but got '{value?.GetType().Name ?? "null"}'."
+            );
+        }
+        return styped_state;
     }
-    public abstract object ProcessState(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle);
-    public virtual object BidirectionalProcessState(object currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
+    protected abstract Stype ProcessState(Stype currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle);
+    protected virtual Stype BidirectionalProcessState(Stype currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         return ProcessState(currentState, newStateBundle, oldStateBundle);
     }

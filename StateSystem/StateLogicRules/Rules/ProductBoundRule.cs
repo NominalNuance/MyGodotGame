@@ -1,21 +1,22 @@
 using System;
 using System.Collections.Generic;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.StateSystem.StateLogicRules;
 
-public class ProductBoundRule : StateLogicRule
+public class ProductBoundRule : StateLogicRule<double>
 {    
-    override public bool AcceptsAnyDependency { get; protected set; } = true;
-    
+    //note that you will have to use unique, dummy DependencyKeys for this.
+    public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => true;
     override public bool IsBidirectional { get; protected set; } = true;
-    public override object ProcessState(object currentState, Dictionary<string, object> newStateBundle, Dictionary<string, object> oldStateBundle)
+    protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         double product = 1;
-        foreach (string dependency_key in DependencyKeys)
+        foreach (var (dependency_key, _) in Dependencies)
         {
-            product *= Convert.ToDouble(GetDependencyValue(dependency_key, newStateBundle, oldStateBundle));
+            product *= GetDependencyValue<double>(dependency_key, newStateBundle, oldStateBundle);
         }
-        return Convert.ChangeType(product, currentState.GetType());
+        return product;
     }
 
 }

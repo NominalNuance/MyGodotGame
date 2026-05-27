@@ -13,7 +13,7 @@ public interface IStateKeeper
     public List<object> Dependencies { get; }
     public HashSet<IStateKeeper> DependentKeepers { get; }
     public ImmutableHashSet<StateHandlerName> ActionHandlers { get;} 
-    public Dictionary<Type, StateLogicRule> StateLogicRules { get; } 
+    public Dictionary<Type, IStateLogicRule> StateLogicRules { get; } 
     public bool HasRunThisAction { get; set; }
     public bool DerivedState { get; set; }
     public Dictionary<IStateKey, object> HandleAction(Dictionary<IStateKey, object> currentStateBundle, StateHandlerName handlerName, object Payload);
@@ -37,7 +37,7 @@ public class StateKeeper<SType> : IStateKeeper
     public List<object> Dependencies { get; private set; } = []; // What I depend on
     public HashSet<IStateKeeper> DependentKeepers { get; private set; } = []; // What depends on me
     public ImmutableHashSet<StateHandlerName> ActionHandlers { get; private set; } = [];
-    public Dictionary<Type, StateLogicRule> StateLogicRules { get; private set; } = [];
+    public Dictionary<Type, IStateLogicRule> StateLogicRules { get; private set; } = [];
     public bool HasRunThisAction { get; set; } = false;
     public bool DerivedState { get; set; }
 
@@ -136,8 +136,15 @@ public class StateKeeper<SType> : IStateKeeper
             keeper_dependency.RegisterDependent(this);
         }
         Dependencies.Add(dependency);
+        if (!StateLogicRules.TryGetValue(dependencyKey.RuleType, out IStateLogicRule current_rule))
+        {
+            throw new Exception
+            (
+                $"State '{Key}' tried to add dependency '{dependencyKey}', " +
+                $"but it has no logic rule of type '{dependencyKey.RuleType.Name}'."
+            );
+        }
 
-        StateLogicRule current_rule = StateLogicRules[dependencyKey.RuleType];
         if (current_rule.AcceptsDependency(dependencyKey))
         {
             current_rule.SetupDependency(dependencyKey, dependency);
@@ -155,7 +162,16 @@ public class StateKeeper<SType> : IStateKeeper
     {
         foreach (StateLogicRuleFactory ruleFactory in newLogicRules)
         {
-            StateLogicRule new_rule = ruleFactory.CreateInstance();
+            if (ruleFactory.StateType != typeof(SType))
+            {
+                throw new Exception
+                (
+                    $"State '{Key}' has type '{typeof(SType).Name}', but logic rule " +
+                    $"'{ruleFactory.RuleType.Name}' expects '{ruleFactory.StateType.Name}'."
+                );
+            }
+
+            IStateLogicRule new_rule = ruleFactory.CreateInstance();
             new_rule.Key = Key;
             StateLogicRules.Add(ruleFactory.RuleType, new_rule);
         }
@@ -176,7 +192,15 @@ public class StateKeeper<SType> : IStateKeeper
     }
     public object INormalize(object valueToNormalize)
     {
-        return Normalize((SType)valueToNormalize);
+        if (valueToNormalize is not SType typedValue)
+        {
+            throw new Exception
+            (
+                $"Cannot normalize value for state '{Key}'. " +
+                $"Expected '{typeof(SType).Name}', got '{valueToNormalize?.GetType().Name ?? "null"}'."
+            );
+        }
+        return Normalize(typedValue);
     }
 
     public SType Normalize(SType valueToNormalize)
