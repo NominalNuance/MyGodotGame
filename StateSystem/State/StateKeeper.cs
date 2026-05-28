@@ -12,8 +12,6 @@ public interface IStateKeeper
     public IStateKey Key { get; }
     public List<object> Dependencies { get; }
     public HashSet<IStateKeeper> DependentKeepers { get; }
-    public ImmutableHashSet<StateHandlerName> ActionHandlers { get;} 
-    public Dictionary<Type, IStateLogicRule> StateLogicRules { get; } 
     public bool HasRunThisAction { get; set; }
     public bool DerivedState { get; set; }
     public Dictionary<IStateKey, object> HandleAction(Dictionary<IStateKey, object> currentStateBundle, StateHandlerName handlerName, object Payload);
@@ -36,8 +34,8 @@ public class StateKeeper<SType> : IStateKeeper
     IStateKey IStateKeeper.Key => Key;
     public List<object> Dependencies { get; private set; } = []; // What I depend on
     public HashSet<IStateKeeper> DependentKeepers { get; private set; } = []; // What depends on me
-    public ImmutableHashSet<StateHandlerName> ActionHandlers { get; private set; } = [];
-    public Dictionary<Type, IStateLogicRule> StateLogicRules { get; private set; } = [];
+    private ImmutableHashSet<StateHandlerName> ActionHandlers { get; set; } = [];
+    private Dictionary<Type, IStateLogicRule> StateLogicRules { get; set; } = [];
     public bool HasRunThisAction { get; set; } = false;
     public bool DerivedState { get; set; }
 

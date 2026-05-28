@@ -4,6 +4,7 @@ using EroJRPG.Entities.EntityConfigs;
 using EroJRPG.Entities.EntityConfigs.Configs;
 using EroJRPG.Main;
 using EroJRPG.Requests;
+using EroJRPG.Requests.Commands.EntityInstance;
 using EroJRPG.Requests.Mutations;
 using Godot;
 
@@ -18,7 +19,8 @@ public partial class EntityManager : AManager
     public override void _Ready()
     {
         base._Ready();
-        _ = RouterInterface.RouteRequest(new Mutation_Entity_CreateEntity(new EntityConfigTest()));
+        EntityID temp = RouterInterface.RouteRequest(new Mutation_Entity_CreateEntity(new EntityConfigTest()));
+        RouterInterface.RouteRequest(new Command_EntityInstance_SetHealth(temp, 50));
         
     }
 

@@ -7,7 +7,7 @@ public interface IStateBundleTemplate
 {
     public IReadOnlyList<IStateDefinition> States {get;}
 }
-public class HealthBundle : IStateBundleTemplate
+public class StateBundleHealth : IStateBundleTemplate
 {
     public static readonly StateKey<double> MaxHealth = new("MaxHealth");
     public static readonly StateKey<double> CurrentHealth = new("CurrentHealth");

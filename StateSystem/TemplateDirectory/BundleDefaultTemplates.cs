@@ -12,10 +12,10 @@ public interface IBundleDefaultTemplate
 
 public class HealthBundleWoundedDefault : IBundleDefaultTemplate
 {
-    public Type BundleType { get; } = typeof(HealthBundle);
+    public Type BundleType { get; } = typeof(StateBundleHealth);
     public IReadOnlyDictionary<IStateKey, object> DefaultValues { get;} = 
         new Dictionary<IStateKey, object>
         {
-            [HealthBundle.CurrentHealth] = 50.0d
+            [StateBundleHealth.CurrentHealth] = 50.0d
         };
 }

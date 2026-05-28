@@ -1,5 +1,6 @@
 using EroJRPG.Requests;
 using EroJRPG.Requests.Commands.EntityInstance;
+using Godot;
 
 namespace EroJRPG.Entities.EntityComponents.Components.HealthComponent;
 
@@ -20,7 +21,7 @@ public class HealthComponent : EntityStats
     }
     override protected void RegisterHandlers()
     {
-        RequestRegistry.RegisterCommand<Command_EntityInstance_SetHealth>(HandleSetHealth);
+        RequestRegistry.RegisterRequest<Command_EntityInstance_SetHealth>(HandleSetHealth);
     }
 
     private void HandleSetHealth(Command_EntityInstance_SetHealth currentCommand)
