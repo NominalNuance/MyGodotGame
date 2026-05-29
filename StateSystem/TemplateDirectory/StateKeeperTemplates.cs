@@ -1,22 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using EroJRPG.StateSystem.StateActionHandler;
 using EroJRPG.StateSystem.StateLogicRules;
 using EroJRPG.StateSystem.StateLogicRules.Rules;
 
 namespace EroJRPG.StateSystem.TemplateDirectory;
 public interface IKeeperTemplate
 {
-    public ImmutableHashSet<StateHandlerName> Actions {get;}
-    public IReadOnlyList<StateLogicRuleFactory> LogicRules {get;}
+    public ImmutableHashSet<StateHandlerFactory> Actions {get;}
+    public ImmutableArray<StateLogicRuleFactory> LogicRules {get;}
     public bool Derived {get;}
     public bool AcceptsValueType(Type valueType);
 }
 
 public abstract class AAllTypeKeeperTemplate : IKeeperTemplate
 {
-    public abstract ImmutableHashSet<StateHandlerName> Actions {get;}
-    public abstract IReadOnlyList<StateLogicRuleFactory> LogicRules {get;}
+    public abstract ImmutableHashSet<StateHandlerFactory> Actions {get;}
+    public abstract ImmutableArray<StateLogicRuleFactory> LogicRules {get;}
     public abstract bool Derived {get;}
     public bool AcceptsValueType(Type valueType)
     {
@@ -24,10 +25,10 @@ public abstract class AAllTypeKeeperTemplate : IKeeperTemplate
     }
 }
 
-public abstract class ATypedKeeperTemplate<TValue> : IKeeperTemplate
+public abstract class AKeeperTemplate<TValue> : IKeeperTemplate
 {
-    public abstract ImmutableHashSet<StateHandlerName> Actions {get;}
-    public abstract IReadOnlyList<StateLogicRuleFactory> LogicRules {get;}
+    public abstract ImmutableHashSet<StateHandlerFactory> Actions {get;}
+    public abstract ImmutableArray<StateLogicRuleFactory> LogicRules {get;}
     public abstract bool Derived {get;}
     public bool AcceptsValueType(Type valueType)
     {
@@ -42,105 +43,105 @@ public abstract class ATypedKeeperTemplate<TValue> : IKeeperTemplate
 /// 
 /// 
 /// 
-public class BasicKeeper : AAllTypeKeeperTemplate
+public class BasicKeeper<TValue> : AKeeperTemplate<TValue>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = 
     [
-        StateHandlerName.Set
+        StateHandlerFactories.Set<TValue>(),
     ];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = [];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = [];
     public override bool Derived {get;} = false;
 }
 
-public class BoolKeeper : ATypedKeeperTemplate<bool>
+public class BoolKeeper : AKeeperTemplate<bool>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = 
     [
-        StateHandlerName.Set,
-        StateHandlerName.Flip
+        StateHandlerFactories.Set<bool>(),
+        StateHandlerFactories.FlipBool(),
     ];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = [];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = [];
     public override bool Derived {get;} = false;
 }
 
-public class NumericKeeper : ATypedKeeperTemplate<double>
+public class NumericKeeper : AKeeperTemplate<double>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = 
     [
-        StateHandlerName.Set,
-        StateHandlerName.Increment,
-        StateHandlerName.Decrement
+        StateHandlerFactories.Set<double>(),
+        StateHandlerFactories.IncrementDouble(),
+        StateHandlerFactories.DecrementDouble(),
     ];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = [];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = [];
     public override bool Derived {get;} = false;
 }
 
-public class BoundedKeeper : ATypedKeeperTemplate<double>
+public class BoundedKeeper : AKeeperTemplate<double>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = 
     [
-        StateHandlerName.Set,
-        StateHandlerName.Increment,
-        StateHandlerName.Decrement
+        StateHandlerFactories.Set<double>(),
+        StateHandlerFactories.IncrementDouble(),
+        StateHandlerFactories.DecrementDouble(),
     ];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<BoundedValueRule, double>()
-    ];
-    public override bool Derived {get;} = false;
-}
-
-public class ProportionalBoundedKeeper : ATypedKeeperTemplate<double>
-{
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = 
-    [
-        StateHandlerName.Set,
-        StateHandlerName.Increment,
-        StateHandlerName.Decrement
-    ];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
-    [
-        StateLogicRuleFactory.Create<ProportionalBoundedValueRule, double>()
+        StateLogicRuleFactories.BoundedValue()
     ];
     public override bool Derived {get;} = false;
 }
 
-public class ProductKeeper : ATypedKeeperTemplate<double>
+public class ProportionalBoundedKeeper : AKeeperTemplate<double>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = 
     [
-        StateLogicRuleFactory.Create<ProductBoundRule, double>()
+        StateHandlerFactories.Set<double>(),
+        StateHandlerFactories.IncrementDouble(),
+        StateHandlerFactories.DecrementDouble(),
+    ];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = 
+    [
+        StateLogicRuleFactories.ProportionalBoundedValue()
+    ];
+    public override bool Derived {get;} = false;
+}
+
+public class ProductKeeper : AKeeperTemplate<double>
+{
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = [];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = 
+    [
+        StateLogicRuleFactories.ProductBound()
     ];
     public override bool Derived {get;} = true;
 }
 
-public class RatioKeeper : ATypedKeeperTemplate<double>
+public class RatioKeeper : AKeeperTemplate<double>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = [];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<RatioRule, double>()
+        StateLogicRuleFactories.Ratio()
     ];
     public override bool Derived {get;} = true;
 }
 
-public class RatioCeilKeeper : ATypedKeeperTemplate<double>
+public class RatioCeilKeeper : AKeeperTemplate<double>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = [];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<RatioCeilRule, double>()
+        StateLogicRuleFactories.RatioCeil()
     ];
     public override bool Derived {get;} = true;
 }
 
-public class RatioFloorKeeper : ATypedKeeperTemplate<double>
+public class RatioFloorKeeper : AKeeperTemplate<double>
 {
-    public override ImmutableHashSet<StateHandlerName> Actions {get;} = [];
-    public override IReadOnlyList<StateLogicRuleFactory> LogicRules {get;} = 
+    public override ImmutableHashSet<StateHandlerFactory> Actions {get;} = [];
+    public override ImmutableArray<StateLogicRuleFactory> LogicRules {get;} = 
     [
-        StateLogicRuleFactory.Create<RatioFloorRule, double>()
+        StateLogicRuleFactories.RatioFloor()
     ];
     public override bool Derived {get;} = true;
 }

@@ -1,91 +1,84 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using EroJRPG.Scripts.Utilities;
 
-namespace EroJRPG.StateSystem;
-
-public enum StateHandlerName
-{
-    Invalid,
-    Set,
-    Increment,
-    Decrement,
-    Flip
-}
-
-public static class HandlerTest
-{
-    public static HashSet<IStateActionHandler> Actions {get;} =
-    [
-        new StateHandleSet<double>(),
-        new StateHandleIncrement(),
-    ];
-}
-
+namespace EroJRPG.StateSystem.StateActionHandler;
 
 public interface IStateActionHandler
 {
+    public IHandlerKey IKey { get; }
     public object IHandle(object currentState, object payload);
     public Type StateType { get; }
+    public Type PayloadType { get; }
 }
 
-public class StateHandleSet<TState> : IStateActionHandler
+public abstract class AStateActionHandler<TState, TPayload> : IStateActionHandler
 {
-    public Type StateType { get => typeof(TState);}
-
+    public abstract IHandlerKey IKey { get; }
     public object IHandle(object currentState, object payload)
     {
-        return Handle((TState)payload);
+        if (currentState is not TState)
+        {
+            throw new Exception(
+                $"Handler '{IKey}' expected state type '{typeof(TState).Name}', " +
+                $"but got '{currentState?.GetType().Name ?? "null"}'."
+            );
+        }
+
+        if (payload is not TPayload)
+        {
+            throw new Exception(
+                $"Handler '{IKey}' expected payload type '{typeof(TPayload).Name}', " +
+                $"but got '{payload?.GetType().Name ?? "null"}'."
+            );
+        }
+
+         return Handle((TState) currentState, (TPayload)payload);
     }
 
-    private TState Handle(TState payload)
+    protected abstract TState Handle(TState currentState, TPayload payload);
+    public Type StateType { get => typeof(TState); }
+    public Type PayloadType { get => typeof(TPayload); }
+}
+
+///
+/// Concrete Handlers
+/// 
+
+public sealed class StateHandleSet<TState> : AStateActionHandler<TState, TState>
+{
+    public override IHandlerKey IKey { get => Key; }
+    public static readonly HandlerKey<StateHandleSet<TState>, TState, TState> Key = new("StateHandleSet");
+    protected override TState Handle(TState _, TState payload)
     {
         return payload;
     }
 }
 
-public class StateHandleIncrement : IStateActionHandler
+public sealed class StateHandleIncrement : AStateActionHandler<double, double>
 {
-    public Type StateType { get => typeof(double);}
-    public object IHandle(object currentState, object payload)
-    {
-        return Handle((double)currentState, (double)payload);
-    }
-
-    private double Handle(double currentState, double payload)
+    public override IHandlerKey IKey { get => Key; }
+    public static readonly HandlerKey<StateHandleIncrement, double, double> Key = new("StateHandleIncrement");
+    protected override double Handle(double currentState, double payload)
     {
         return currentState + payload;
     }
 }
 
-public static class StateActionHandlers
+public sealed class StateHandleDecrement : AStateActionHandler<double, double>
 {
-    public static readonly Dictionary<StateHandlerName, Func<object, object, object>> Handlers = new()
+    public override IHandlerKey IKey { get => Key; }
+    public static readonly HandlerKey<StateHandleDecrement, double, double> Key = new("StateHandleDecrement");
+    protected override double Handle(double currentState, double payload)
     {
-        {
-            StateHandlerName.Set, (currentState, payload) =>
-            {
-                return payload;
-            }
-        },
-        {
-            StateHandlerName.Increment, (currentState, payload) =>
-            {
-                return NumericUtilities.Operation(currentState, payload, "add");
-            }
-        },
-        {
-            StateHandlerName.Decrement, (currentState, payload) =>
-            {
-                return NumericUtilities.Operation(currentState, payload, "sub");
-            }
-        },
-        {
-            StateHandlerName.Flip, (currentState, payload) =>
-            {
-                return !(bool)currentState;
-            }
-        }
-    };
+        return currentState - payload;
+    }
+}
+
+public sealed class StateHandleFlip : AStateActionHandler<bool, bool>
+{
+    public override IHandlerKey IKey { get => Key; }
+    public static readonly HandlerKey<StateHandleFlip, bool, bool> Key = new("StateHandleFlip");
+    protected override bool Handle(bool currentState, bool _)
+    {
+        return !currentState;
+    }
 }

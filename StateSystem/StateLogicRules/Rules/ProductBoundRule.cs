@@ -6,9 +6,12 @@ namespace EroJRPG.StateSystem.StateLogicRules;
 
 public class ProductBoundRule : StateLogicRule<double>
 {    
-    //note that you will have to use unique, dummy DependencyKeys for this.
-    public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => true;
-    override public bool IsBidirectional { get; protected set; } = true;
+    public static RuleDependencyKey<ProductBoundRule> Factor(int index)
+    {
+        return new RuleDependencyKey<ProductBoundRule>($"Factor{index}");
+    }
+    public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck.RuleType == typeof(ProductBoundRule);
+    override public bool RunsOnDependencyChange { get; protected set; } = true;
     protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {
         double product = 1;

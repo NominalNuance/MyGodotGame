@@ -9,7 +9,7 @@ public class RatioRule : StateLogicRule<double>
 {
     public static readonly RuleDependencyKey<RatioRule> Numerator = new("Numerator");
     public static readonly RuleDependencyKey<RatioRule> Denominator = new("Denominator");
-    override public bool IsBidirectional { get; protected set; } = true;
+    override public bool RunsOnDependencyChange { get; protected set; } = true;
     public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == Numerator || keyToCheck == Denominator;
         
     protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)

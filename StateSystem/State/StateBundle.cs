@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EroJRPG.StateSystem.StateActionHandler;
 using EroJRPG.StateSystem.TemplateDirectory;
 
 
@@ -17,17 +18,181 @@ public class StateBundle
         BundleID = newBundleID;
         InitializeKeepers(newBundleTemplate);
         SetDefaultValues(bundleDefaultTemplate, newBundleTemplate.GetType());
+        ValidateNoDependencyCycles();
         ResolveDerivedValues();
     }
 
-    public Dictionary<IStateKey, object> Dispatch(Dictionary<IStateKey, object> currentStateBundle, IStateKey stateKey, StateHandlerName handlerName, object Payload)
+    public Dictionary<IStateKey, object> Dispatch(Dictionary<IStateKey, object> currentStateBundle, IStateKey stateKey, IHandlerKey handlerKey, object Payload)
     {
-        Dictionary<IStateKey, object> new_bundle = Keepers[stateKey].HandleAction(currentStateBundle, handlerName, Payload);
+        Dictionary<IStateKey, object> new_bundle = Keepers[stateKey].HandleAction(currentStateBundle, handlerKey, Payload);
+        if (new_bundle.Count == 0)
+        {
+            return new_bundle;
+        }
+
+        PropagateDependencyChanges(new_bundle, currentStateBundle);
+        return new_bundle;
+    }
+
+    private void PropagateDependencyChanges(Dictionary<IStateKey, object> currentStateBundle, Dictionary<IStateKey, object> oldStateBundle)
+    {
+        HashSet<IStateKey> changed_states = CollectChangedDependents(currentStateBundle.Keys);
+        
+        if (changed_states.Count == 0)
+        {
+            return;
+        }
+
+        List<IStateKeeper> ordered_changed_states = TopologicalSortChanged(changed_states);
+        foreach (IStateKeeper keeper in ordered_changed_states)
+        {
+            object old_value = oldStateBundle[keeper.Key];
+            object new_value = keeper.RunDependencyTriggeredLogicRules(currentStateBundle, oldStateBundle);
+            if (!Equals(new_value, old_value))
+            {
+                currentStateBundle[keeper.Key] = new_value;
+            }
+        }
+    }
+
+    private HashSet<IStateKey> CollectChangedDependents(IEnumerable<IStateKey> changedKeys)
+    {
+        HashSet<IStateKey> affected = [];
+        Queue<IStateKeeper> queue = [];
+
+        foreach (IStateKey changed_key in changedKeys)
+        {
+            foreach (IStateKeeper dependent in Keepers[changed_key].DependentKeepers)
+            {
+                if (affected.Add(dependent.Key))
+                {
+                    queue.Enqueue(dependent);
+                }
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            IStateKeeper current_keeper = queue.Dequeue();
+            foreach (IStateKeeper dependent in current_keeper.DependentKeepers)
+            {
+                if (affected.Add(dependent.Key))
+                {
+                    queue.Enqueue(dependent);
+                }
+            }
+        }
+
+        return affected;
+    }
+
+    private List<IStateKeeper> TopologicalSortChanged(HashSet<IStateKey> changedKeys)
+    {
+        Dictionary<IStateKey, int> in_degree = changedKeys.ToDictionary(key => key, _ => 0);
+
+        foreach (IStateKey key in changedKeys)
+        {
+            IStateKeeper current_keeper = Keepers[key];
+            foreach (IStateKeeper dependency in current_keeper.Dependencies.OfType<IStateKeeper>())
+            {
+                if (changedKeys.Contains(dependency.Key))
+                {
+                    in_degree[key]++;
+                }
+            }
+        }
+
+        Queue<IStateKey> ready = [];
+        foreach(var (key, degree) in in_degree)
+        {
+            if (degree == 0)
+            {
+                ready.Enqueue(key);
+            }
+        }
+        List<IStateKeeper> ordered = [];
+        
+        while (ready.Count > 0)
+        {
+            IStateKey key = ready.Dequeue();
+            IStateKeeper current_keeper = Keepers[key];
+            ordered.Add(current_keeper);
+
+            foreach (IStateKeeper dependent in current_keeper.DependentKeepers)
+            {
+                if (!changedKeys.Contains(dependent.Key))
+                {
+                    continue;
+                }
+                in_degree[dependent.Key]--;
+                if (in_degree[dependent.Key] == 0)
+                {
+                    ready.Enqueue(dependent.Key);
+                }
+            }
+        }
+        
+        if (ordered.Count != changedKeys.Count)
+        {
+            throw new Exception
+            (
+                $"Dependency cycle detected while propagating bundle '{BundleName}'. " +
+                $"Affected states: {string.Join(", ", changedKeys)}"
+            );
+        }
+
+        return ordered;
+    }
+
+    private void ValidateNoDependencyCycles()
+    {
+        Dictionary<IStateKey, int> in_degree = Keepers.ToDictionary(kvp => kvp.Key, _ => 0);
+
         foreach (var (_, keeper) in Keepers)
         {
-            keeper.HasRunThisAction = false;
+            foreach (IStateKeeper dependency in keeper.Dependencies.OfType<IStateKeeper>())
+            {
+                in_degree[keeper.Key]++;
+            }
         }
-        return new_bundle;
+
+        Queue<IStateKey> ready = [];
+        foreach(var (key, degree) in in_degree)
+        {
+            if (degree == 0)
+            {
+                ready.Enqueue(key);
+            }
+        }
+       
+       int processed = 0; 
+        while (ready.Count > 0)
+        {
+            IStateKey key = ready.Dequeue();
+            processed++;
+
+            foreach (IStateKeeper dependent in Keepers[key].DependentKeepers)
+            {
+                in_degree[dependent.Key]--;
+                if (in_degree[dependent.Key] == 0)
+                {
+                    ready.Enqueue(dependent.Key);
+                }
+            }
+        }
+        
+        if (processed != Keepers.Count)
+        {
+            IEnumerable<IStateKey> cycleSuspects = in_degree
+            .Where(kvp => kvp.Value > 0)
+            .Select(kvp => kvp.Key);
+
+            throw new Exception
+            (
+                $"Dependency cycle detected in bundle '{BundleName}'. " +
+                $"Suspected states: {string.Join(", ", cycleSuspects)}"
+            );
+        }
     }
     private void InitializeKeepers(IStateBundleTemplate newBundleTemplate)
     {

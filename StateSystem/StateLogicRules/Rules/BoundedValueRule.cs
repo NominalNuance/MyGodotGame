@@ -8,7 +8,7 @@ public sealed class BoundedValueRule : StateLogicRule<double>
 {
     public static readonly RuleDependencyKey<BoundedValueRule> MaxBound = new("MaxBound");
     public static readonly RuleDependencyKey<BoundedValueRule> MinBound = new("MinBound");
-    override public bool IsBidirectional { get; protected set; } = true;
+    override public bool RunsOnDependencyChange { get; protected set; } = true;
     public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == MaxBound || keyToCheck == MinBound;
     protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {

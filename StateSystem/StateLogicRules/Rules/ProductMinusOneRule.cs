@@ -8,7 +8,7 @@ public class ProductMinusOneRule : StateLogicRule<double>
 {
     public static readonly RuleDependencyKey<ProductMinusOneRule> MinusOne = new("MinusOne");
     public static readonly RuleDependencyKey<ProductMinusOneRule> Other = new("Other");
-    override public bool IsBidirectional { get; protected set; } = true;
+    override public bool RunsOnDependencyChange { get; protected set; } = true;
     public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == MinusOne || keyToCheck == Other;
     protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {

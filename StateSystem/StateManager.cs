@@ -7,6 +7,7 @@ using EroJRPG.Requests.Mutations;
 using EroJRPG.Requests.Commands.State;
 using EroJRPG.StateSystem.TemplateDirectory;
 using EroJRPG.Requests.Queries.State;
+using EroJRPG.StateSystem.StateActionHandler;
 
 namespace EroJRPG.StateSystem;
 
@@ -43,7 +44,7 @@ public partial class StateManager : AManager
 
     private void HandleSetState(ICommand_State_SendAction currentCommand)
     {
-        Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.StateAction, currentCommand.Payload);
+        Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.HandlerKey, currentCommand.Payload);
     }
 
     private object HandleGetState(IQuery_State_Get currentQuery)
@@ -79,13 +80,13 @@ public partial class StateManager : AManager
         }
     }
 
-    private void Dispatch(StateBundleID bundleIDToDispatchTo, IStateKey stateKey, StateHandlerName handlerName, object Payload)
+    private void Dispatch(StateBundleID bundleIDToDispatchTo, IStateKey stateKey, IHandlerKey handlerKey, object Payload)
     {
         if (StateDictionary.TryGetValue(bundleIDToDispatchTo, out Dictionary<IStateKey, IState> bundle_state_dict))
         {
             if(bundle_state_dict.ContainsKey(stateKey))
             {
-                Dictionary<IStateKey, object> current_bundle = StateBundles[bundleIDToDispatchTo].Dispatch(CachedStates[bundleIDToDispatchTo], stateKey, handlerName, Payload);
+                Dictionary<IStateKey, object> current_bundle = StateBundles[bundleIDToDispatchTo].Dispatch(CachedStates[bundleIDToDispatchTo], stateKey, handlerKey, Payload);
                 foreach (var (modified_state_name, modified_state) in current_bundle)
                 {
                     IState current_state = bundle_state_dict[modified_state_name];

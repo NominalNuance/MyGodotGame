@@ -3,6 +3,7 @@ using EroJRPG.Requests.Commands.State;
 using EroJRPG.Requests.Mutations;
 using EroJRPG.Requests.Queries.State;
 using EroJRPG.StateSystem;
+using EroJRPG.StateSystem.StateActionHandler;
 using EroJRPG.StateSystem.TemplateDirectory;
 using Godot;
 
@@ -31,7 +32,7 @@ public class HealthRouter(IRequestRouter newRequestRouter) : AComponentRouter, I
         double current_health = RequestRouter.RouteRequest(temp);
         GD.Print($"Current health: {current_health}");
         ///
-        RequestRouter.RouteRequest(new Command_State_SendAction<double>(StateHandlerName.Set, HealthBundleID, StateBundleHealth.CurrentHealth, healthToSet));
+        RequestRouter.RouteRequest(new Command_State_SendAction<double, double>(StateHandleSet<double>.Key, HealthBundleID, StateBundleHealth.CurrentHealth, healthToSet));
         ///
         current_health = RequestRouter.RouteRequest(temp);
         GD.Print($"Current health: {current_health}");
