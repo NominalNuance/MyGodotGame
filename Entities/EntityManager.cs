@@ -4,6 +4,7 @@ using EroJRPG.Entities.EntityConfigs;
 using EroJRPG.Entities.EntityConfigs.Configs;
 using EroJRPG.Main;
 using EroJRPG.Requests;
+using EroJRPG.Requests.Commands;
 using EroJRPG.Requests.Commands.EntityInstance;
 using EroJRPG.Requests.Mutations;
 using Godot;
@@ -34,7 +35,7 @@ public partial class EntityManager : AManager
         foreach (IEntityComponentBlueprint blueprint in entityToCreate.GetComponentBlueprints())
         {
             EntityBlueprintContext blueprint_context = new(RouterInterface);
-            EntityComponent component = blueprint.CreateEntityComponent(blueprint_context);
+            AEntityComponent component = blueprint.CreateEntityComponent(blueprint_context);
             new_entity_data.AddComponent(component, blueprint.Slot);
         }
 
@@ -44,10 +45,12 @@ public partial class EntityManager : AManager
 
     private void DestroyEntity(EntityID idToDestroy)
     {
-        //TODO: have the EntityData run it's own cleanup/destroy procedure
-        /// stateful components should destroy their bundles.
-        /// That can be accomplished after the StateManager refactor
-        /// 
+        if (!EntityDictionary.TryGetValue(idToDestroy, out EntityData entity_data))
+        {
+            GD.PushWarning($"EntityManager tried to destroy missing entity: {idToDestroy}");
+            return;
+        }
+        entity_data.OnDestroy();
         EntityDictionary.Remove(idToDestroy);
     }
 
@@ -57,7 +60,13 @@ public partial class EntityManager : AManager
         {
             if (requestToProcess is IRequestEntityInstance entity_instance_request)
             {
-                return EntityDictionary[entity_instance_request.TargetEntityID].ProcessRequest(requestToProcess);
+                if (EntityDictionary.TryGetValue(entity_instance_request.TargetEntityID, out EntityData entity_data))
+                {
+                    return entity_data.ProcessRequest(requestToProcess);
+                }
+
+                GD.PushError($"EntityManager received request for missing entity: {entity_instance_request.TargetEntityID}");
+                return null;
             }
             else
             {
@@ -71,12 +80,22 @@ public partial class EntityManager : AManager
 
     protected override void SetupHandlerMap()
     {   
+        //Mutations
         RegisterRequest<Mutation_Entity_CreateEntity, EntityID>(HandleCreateEntity);
+
+        //Commands
+        RegisterRequest<Command_Entity_Destroy>(HandleDestroy);
+
+        //Queries
     }
 
     private EntityID HandleCreateEntity(Mutation_Entity_CreateEntity currentMutation)
     {
         return CreateEntity(currentMutation.EntityToCreate);
+    }
+    private void HandleDestroy(Command_Entity_Destroy currentCommand)
+    {
+        DestroyEntity(currentCommand.TargetEntityID);
     }
 }
 

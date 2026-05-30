@@ -6,7 +6,7 @@ namespace EroJRPG.StateSystem.StateLogicRules.Rules;
 
 public class GatedValueRule : StateLogicRule<double>
 {
-    public static readonly RuleDependencyKey<BoundedValueRule> Gate = new("Gate");
+    public static readonly RuleDependencyKey<GatedValueRule> Gate = new("Gate");
     public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == Gate;
     protected override double ProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     {

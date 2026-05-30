@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MenuLibrary" format=3 uid="uid://dynxclrpj2nw3"]
+
+[ext_resource type="Script" uid="uid://bqke40wijqv8p" path="res://UI/MenuDefinition.cs" id="1_72m03"]
+[ext_resource type="Resource" uid="uid://c2gttv1umtrno" path="res://UI/Menus Root/TestMenu.tres" id="2_w0eyk"]
+[ext_resource type="Script" uid="uid://bgkul3turnaw8" path="res://UI/MenuLibrary.cs" id="3_u8xbx"]
+
+[resource]
+script = ExtResource("3_u8xbx")
+Menus = Array[ExtResource("1_72m03")]([ExtResource("2_w0eyk")])

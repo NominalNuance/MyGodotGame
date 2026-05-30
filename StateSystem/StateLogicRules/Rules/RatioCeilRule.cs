@@ -7,8 +7,8 @@ namespace EroJRPG.StateSystem.StateLogicRules;
 
 public class RatioCeilRule : StateLogicRule<double>
 {
-    public static readonly RuleDependencyKey<RatioRule> Numerator = new("Numerator");
-    public static readonly RuleDependencyKey<RatioRule> Denominator = new("Denominator");
+    public static readonly RuleDependencyKey<RatioCeilRule> Numerator = new("Numerator");
+    public static readonly RuleDependencyKey<RatioCeilRule> Denominator = new("Denominator");
     override public bool RunsOnDependencyChange { get; protected set; } = true;
     public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == Numerator || keyToCheck == Denominator;
         

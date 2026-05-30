@@ -21,7 +21,7 @@ public class ProportionalBoundedValueRule : StateLogicRule<double>
     protected override double DependencyTriggeredProcessState(double currentState, Dictionary<IStateKey, object> newStateBundle, Dictionary<IStateKey, object> oldStateBundle)
     { 
         double max_bound = GetDependencyValue<double>(MaxBound, newStateBundle, oldStateBundle);
-        double old_max_bound = GetDependencyValue<double>(MinBound, oldStateBundle, oldStateBundle);
+        double old_max_bound = GetDependencyValue<double>(MaxBound, oldStateBundle, oldStateBundle);
         return currentState * (max_bound / old_max_bound);
     }
 }

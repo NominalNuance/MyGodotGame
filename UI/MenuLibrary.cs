@@ -14,25 +14,48 @@ public enum MenuID
     PauseMenu
 }
 
-public static class MenuLibrary
+[GlobalClass]
+public partial class MenuLibrary : Resource
 {
-    private static Dictionary<MenuID, PackedScene> MenuMap = new()
-    {
-        {MenuID.TestMenu, ResourceLoader.Load<PackedScene>("res://UI/SelectionMenus/TestMenu.tscn")},
-        {MenuID.MainMenu, null},
-        {MenuID.Inventory, null},
-        {MenuID.PauseMenu, null}
-    };
+    [Export] public Godot.Collections.Array<MenuDefinition> Menus { get; set; } = [];
+    private static Dictionary<MenuID, PackedScene> MenuMap;
 
-    public static PackedScene GetMenu(MenuID menuToGet)
+    private void BuildMenuMap()
     {
-        try
+        MenuMap = [];
+        foreach(MenuDefinition menu_definition in Menus)
         {
-            return MenuMap[menuToGet];
+            if (menu_definition == null)
+            {
+                GD.PushError($"{GetType().Name} has a null MenuDefintion!");
+            }
+            if (menu_definition.ID == MenuID.Invalid)
+            {
+                GD.PushError($"{GetType().Name} has a MenuDefintion with an Invalid ID!");
+            }
+            if (menu_definition.MenuScene == null)
+            {
+                GD.PushError($"{GetType().Name} got a MenuDefintion with no Menu! ID of MenuDefintion: {menu_definition.ID}");
+            }
+
+            MenuMap.Add(menu_definition.ID, menu_definition.MenuScene);
         }
-        catch
+    }
+    public PackedScene GetMenu(MenuID menuToGet)
+    {
+        MenuMap ??= [];
+        if (MenuMap.Count == 0)
         {
-            throw new Exception("The MenuLibrary was given an invalid MenuID!");
+            BuildMenuMap();
+        } 
+
+        if (MenuMap.TryGetValue(menuToGet, out PackedScene packed_menu_scene))
+        {
+            return packed_menu_scene;
+        }
+        else
+        {
+            throw new Exception($"{GetType().Name} could not find the given MenuID: {menuToGet}");
         }
         
     }

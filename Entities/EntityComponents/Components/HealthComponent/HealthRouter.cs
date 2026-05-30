@@ -1,40 +1,25 @@
 using EroJRPG.Requests;
-using EroJRPG.Requests.Commands.State;
-using EroJRPG.Requests.Mutations;
-using EroJRPG.Requests.Queries.State;
-using EroJRPG.StateSystem;
-using EroJRPG.StateSystem.StateActionHandler;
 using EroJRPG.StateSystem.TemplateDirectory;
 using Godot;
 
 namespace EroJRPG.Entities.EntityComponents.Components.HealthComponent;
 
-public interface IHealthRouter : IEntityRouter
+public interface IHealthRouterMediator : IStatefulComponentRouterMediator
 {
-    public void CreateHealthBundle();
-    public void SetEntityHealth(double healthToSet);
+    public void SetCurrentHealth(double healthToSet);
+    public double GetCurrentHealth();
 }
 
-public class HealthRouter(IRequestRouter newRequestRouter) : AComponentRouter, IHealthRouter
+public sealed class HealthRouterMediator(IRequestRouter newRequestRouterInterface) : AStateBundleRouterMediator<StateBundleHealth>(newRequestRouterInterface), IHealthRouterMediator
 {
-    protected override IRequestRouter RequestRouter { get; set; } = newRequestRouter;
-    private StateBundleID HealthBundleID { get; set; }
-
-    //probably should utilize the defaults in some way.
-    public void CreateHealthBundle()
+    public void SetCurrentHealth(double healthToSet)
     {
-        HealthBundleID = RequestRouter.RouteRequest(new Mutation_State_CreateStateBundle(new StateBundleHealth(), null));
+        GD.Print($"Current health: {GetCurrentHealth()}");
+        ///
+        Set(StateBundleHealth.CurrentHealth, healthToSet);
+        ///
+        GD.Print($"Current health: {GetCurrentHealth()}");
     }
 
-    public void SetEntityHealth(double healthToSet)
-    {
-        Query_State_Get<double> temp = new (HealthBundleID, StateBundleHealth.CurrentHealth);
-        double current_health = RequestRouter.RouteRequest(temp);
-        GD.Print($"Current health: {current_health}");
-        ///
-        RequestRouter.RouteRequest(new Command_State_SendAction<double, double>(StateHandleSet<double>.Key, HealthBundleID, StateBundleHealth.CurrentHealth, healthToSet));
-        ///
-        current_health = RequestRouter.RouteRequest(temp);
-        GD.Print($"Current health: {current_health}");
-    }
+    public double GetCurrentHealth() => Get(StateBundleHealth.CurrentHealth);
 }

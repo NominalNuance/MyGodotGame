@@ -1,22 +1,21 @@
 using EroJRPG.Requests;
 using EroJRPG.Requests.Commands.EntityInstance;
-using Godot;
+using EroJRPG.StateSystem.TemplateDirectory;
 
 namespace EroJRPG.Entities.EntityComponents.Components.HealthComponent;
 
 //Later one I will add the ability to initalize the health to a different value than the given default
 //That will come soon(tm) after the StateManager refractor.
-public class HealthComponent : EntityStats
+public class HealthComponent : AEntityStats
 {
-    private IHealthRouter HealthRouterInterface;
-    public override RequestHandlerRegistry RequestRegistry { get; set; }
+    private readonly IHealthRouterMediator HealthRouterMediator;
+    protected override IStatefulComponentRouterMediator RouterMediator { get => HealthRouterMediator; }
 
-    public HealthComponent(IHealthRouter newHealthRouterInterface)
+    public HealthComponent(IHealthRouterMediator newHealthRouterMediator, IBundleDefaultTemplate newBundleDefaults = null)
     {
-        HealthRouterInterface = newHealthRouterInterface;
+        HealthRouterMediator = newHealthRouterMediator;
         RequestRegistry = new(RequestDomain.EntityInstance, "Component Name: " + GetType().Name);
-        
-        HealthRouterInterface.CreateHealthBundle();
+        BundleDefaults = newBundleDefaults;
         RegisterHandlers();
     }
     override protected void RegisterHandlers()
@@ -26,6 +25,6 @@ public class HealthComponent : EntityStats
 
     private void HandleSetHealth(Command_EntityInstance_SetHealth currentCommand)
     {
-        HealthRouterInterface.SetEntityHealth(currentCommand.TargetHealth);
+        HealthRouterMediator.SetCurrentHealth(currentCommand.TargetHealth);
     }
 }

@@ -15,6 +15,7 @@ namespace EroJRPG.UI;
 //To consider for the future after the menu system is finished. Currently, all UIElements are MenuManagers. Maybe the HUDManager is just a separate thing?
 public partial class UIManager : AManager
 {
+    [Export] private MenuLibrary ThisMenuLibrary;
     private Dictionary<MenuID, MenuManager> ManagedElements = [];
     private MenuManager CurrentRootMenu = null;
     public override RequestDomain ThisDomain { get; } = RequestDomain.UIRoot;
@@ -120,7 +121,7 @@ public partial class UIManager : AManager
             GD.PushWarning("UI tried to instantiate a menu that already exists.");
             return menu_to_return;
         }
-        PackedScene menu_to_instantiate = MenuLibrary.GetMenu(menuToInstantiate) 
+        PackedScene menu_to_instantiate = ThisMenuLibrary.GetMenu(menuToInstantiate) 
             ?? throw new Exception("UIManager tried to instantiate a menu that has no scene path associated with it! Maybe try adding that to the MenuLibrary?");
         Node temp = menu_to_instantiate.Instantiate();
         if (temp is MenuManager new_menu)
@@ -194,8 +195,9 @@ public partial class UIManager : AManager
 
     protected override void SetupHandlerMap()
     {   
-        RegisterCommand<Command_UIRoot_OpenMenu>(HandleCommandOpenMenu);
-        RegisterCommand<Command_UIRoot_CloseCurrentMenu>(HandleCommandCloseCurrentMenu);
+        //Commands
+        RegisterRequest<Command_UIRoot_OpenMenu>(HandleCommandOpenMenu);
+        RegisterRequest<Command_UIRoot_CloseCurrentMenu>(HandleCommandCloseCurrentMenu);
     }
 
     private void HandleCommandOpenMenu(Command_UIRoot_OpenMenu currentCommand)

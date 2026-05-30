@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MenuDefinition" format=3 uid="uid://c2gttv1umtrno"]
+
+[ext_resource type="Script" uid="uid://bqke40wijqv8p" path="res://UI/MenuDefinition.cs" id="1_2xthe"]
+[ext_resource type="PackedScene" uid="uid://bymjmo2knj3hn" path="res://UI/Menus Root/TestMenu.tscn" id="1_rjhdt"]
+
+[resource]
+script = ExtResource("1_2xthe")
+ID = 1
+MenuScene = ExtResource("1_rjhdt")

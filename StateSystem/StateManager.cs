@@ -30,10 +30,19 @@ public partial class StateManager : AManager
 
     protected override void SetupHandlerMap()
     {   
+        //Mutations
         RegisterRequest<Mutation_State_CreateStateBundle, StateBundleID>(HandleCreateStateBundle);
 
-        RegisterRequest<ICommand_State_SendAction>(HandleSetState);
+        //Commands
+        RegisterRequest<ICommand_State_SendAction>(HandleStateAction);
+        RegisterRequest<ICommand_State_Subscribe>(HandleSubscribe);
+        RegisterRequest<Command_State_Unsubscribe>(HandleUnsubscribe);
+        RegisterRequest<Command_State_DestroyStateBundle>(HandleDestroyStateBundle);
 
+        RegisterRequest<ICommand_State_Set>(HandleSet);
+        RegisterRequest<Command_State_Flip>(HandleFlip);
+
+        //Queries
         RegisterRequest<IQuery_State_Get>(HandleGetState);
     }
 
@@ -42,9 +51,34 @@ public partial class StateManager : AManager
         return CreateBundle(currentMutation.BundleToCreate, currentMutation.DefaultsToAssign);
     }
 
-    private void HandleSetState(ICommand_State_SendAction currentCommand)
+    private void HandleStateAction(ICommand_State_SendAction currentCommand)
     {
         Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.HandlerKey, currentCommand.Payload);
+    }
+
+    private void HandleSubscribe(ICommand_State_Subscribe currentCommand)
+    {
+        Subscribe(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.Subscriber, currentCommand.ICallbackFunction, currentCommand.IConditional);
+    }
+
+    private void HandleUnsubscribe(Command_State_Unsubscribe currentCommand)
+    {
+        Unsubscribe(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.Unsubscriber);
+    }
+
+    private void HandleDestroyStateBundle(Command_State_DestroyStateBundle currentCommand)
+    {
+        DestroyBundle(currentCommand.TargetBundleID);
+    }
+
+    private void HandleSet(ICommand_State_Set currentCommand)
+    {
+        Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.HandlerKey, currentCommand.Payload);
+    }
+
+    private void HandleFlip(Command_State_Flip currentCommand)
+    {
+        Dispatch(currentCommand.TargetBundleID, currentCommand.TargetStateKey, currentCommand.HandlerKey, default);
     }
 
     private object HandleGetState(IQuery_State_Get currentQuery)
@@ -61,6 +95,10 @@ public partial class StateManager : AManager
 
         return result;
     }
+
+    //
+    //end of handlers
+    //
     private object GetState(StateBundleID bundleIDToGet, IStateKey stateKey)
     {
         if (StateDictionary.TryGetValue(bundleIDToGet, out Dictionary<IStateKey, IState> bundle_state_dict))
@@ -164,6 +202,8 @@ public partial class StateManager : AManager
         return new_bundle.BundleID;
     }
 
+    //We may eventually want to notify any subscribers that their sate is being destroyed. 
+    //Maybe, something to keep in mind if that ever becomes a concern.
     private void DestroyBundle(StateBundleID bundleIDToDestroy)
     {
         if (!StateBundles.ContainsKey(bundleIDToDestroy))

@@ -7,8 +7,8 @@ namespace EroJRPG.StateSystem.StateLogicRules;
 
 public class RatioFloorRule : StateLogicRule<double>
 {
-    public static readonly RuleDependencyKey<RatioRule> Numerator = new("Numerator");
-    public static readonly RuleDependencyKey<RatioRule> Denominator = new("Denominator");
+    public static readonly RuleDependencyKey<RatioFloorRule> Numerator = new("Numerator");
+    public static readonly RuleDependencyKey<RatioFloorRule> Denominator = new("Denominator");
     override public bool RunsOnDependencyChange { get; protected set; } = true;
     public override bool AcceptsDependency(IRuleDependencyKey keyToCheck) => keyToCheck == Numerator || keyToCheck == Denominator;
         

@@ -4,7 +4,7 @@ namespace EroJRPG.Entities.EntityComponents;
 
 public interface IEntityComponentBlueprint
 {
-    public EntityComponent CreateEntityComponent(EntityBlueprintContext newBlueprintContext);
+    public AEntityComponent CreateEntityComponent(EntityBlueprintContext newBlueprintContext);
     public ComponentSlotEnum Slot {get;}
 }
 
